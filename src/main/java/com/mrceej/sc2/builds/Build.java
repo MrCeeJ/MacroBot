@@ -1,16 +1,15 @@
 package com.mrceej.sc2.builds;
 
-import com.github.ocraft.s2client.protocol.data.UnitType;
-import com.mrceej.sc2.CeejBot;
+import com.mrceej.sc2.macroBot.MacroBot;
 
 public abstract class Build {
 
-    CeejBot agent;
+    final MacroBot agent;
 
-    public Build(CeejBot agent) {
+    Build(MacroBot agent) {
         this.agent = agent;
     }
-    public abstract UnitType getNextBuildItem();
 
     public abstract void update();
+    public abstract void init();
 }

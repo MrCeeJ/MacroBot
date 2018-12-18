@@ -15,7 +15,7 @@ public class CeejBot extends S2Agent {
     final String opponentName;
 
 
-    public CeejBot(PlayerSettings opponent, Race playerRace) {
+    protected CeejBot(PlayerSettings opponent, Race playerRace) {
         this.opponentName = opponent.getPlayerName()!=null?opponent.getPlayerName() : "AI-"+opponent.getDifficulty().name();
         this.opponentRace = opponent.getRace();
         this.playerRace = playerRace;

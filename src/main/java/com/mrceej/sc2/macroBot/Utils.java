@@ -6,6 +6,7 @@ import com.github.ocraft.s2client.protocol.spatial.Point;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.mrceej.sc2.CeejBot;
+import com.mrceej.sc2.things.Base;
 
 import java.util.Comparator;
 import java.util.List;
@@ -14,7 +15,7 @@ import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 public class Utils {
 
-    CeejBot agent;
+    private final CeejBot agent;
 
     public Utils(CeejBot agent) {
         this.agent = agent;
@@ -35,7 +36,7 @@ public class Utils {
         return agent.observation().getUnits(Alliance.SELF, (unitInPool -> unitInPool.unit().getType().equals(unit)));
     }
 
-    Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
+    private Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
         return (p1, p2) -> {
             Double d1 = p1.distance(source);
             Double d2 = p2.distance(source);
@@ -50,25 +51,19 @@ public class Utils {
                 .orElseGet(null);
     }
 
+    Comparator<Base> getLinearDistanceComparatorForBase(Point2d location) {
+        return (u1, u2) -> {
+            Double d1 = u1.getBase().unit().getPosition().toPoint2d().distance(location);
+            Double d2 = u2.getBase().unit().getPosition().toPoint2d().distance(location);
+            return d1.compareTo(d2);
+        };
+    }
+
     Comparator<UnitInPool> getLinearDistanceComparatorForUnit(Point2d location) {
         return (u1, u2) -> {
             Double d1 = u1.unit().getPosition().toPoint2d().distance(location);
             Double d2 = u2.unit().getPosition().toPoint2d().distance(location);
             return d1.compareTo(d2);
         };
-    }
-
-    public UnitInPool findNearestMineralPatch(Point2d start) {
-        List<UnitInPool> units = agent.observation().getUnits(Alliance.NEUTRAL, UnitInPool.isUnit(NEUTRAL_MINERAL_FIELD));
-        double distance = Double.MAX_VALUE;
-        UnitInPool patch = null;
-        for (UnitInPool unitInPool : units) {
-            double d = unitInPool.unit().getPosition().toPoint2d().distance(start);
-            if (d < distance) {
-                distance = d;
-                patch = unitInPool;
-            }
-        }
-        return patch;
     }
 }

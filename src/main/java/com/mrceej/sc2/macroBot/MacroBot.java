@@ -7,6 +7,7 @@ import com.github.ocraft.s2client.protocol.game.Race;
 import com.mrceej.sc2.CeejBot;
 import com.mrceej.sc2.builds.Build;
 import com.mrceej.sc2.builds.PureMacro;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
@@ -14,24 +15,32 @@ import java.util.List;
 @Log4j2
 public class MacroBot extends CeejBot {
 
+    @Getter
+    private final Utils utils;
     private Logger logger;
+    @Getter
     private Intel intel;
+    @Getter
     private Build build;
+    @Getter
     private Overseer overseer;
-    private Utils utils;
+    @Getter
     private BuildManager buildManager;
 
     public MacroBot(PlayerSettings opponent) {
         super(opponent, Race.ZERG);
-    }
-
-    private void init() {
         this.logger = new Logger();
         this.intel = new Intel();
         this.utils = new Utils(this);
-        this.buildManager = new BuildManager(this, utils);
-        this.build = new PureMacro(this, buildManager);
-        this.overseer = new Overseer(this, intel, build, utils);
+        this.build = new PureMacro(this);
+        this.overseer = new Overseer(this);
+        this.buildManager = new BuildManager(this);
+    }
+
+    private void init() {
+        build.init();
+        overseer.init();
+        buildManager.init();
     }
 
     private void runAI() {
@@ -42,7 +51,7 @@ public class MacroBot extends CeejBot {
 
     @Override
     public void onGameStart() {
-        log.info("Hello world of Starcraft II bots! RetBot here!");
+        log.info("Hello Starcraft II bots! MacroBot here!");
         init();
     }
 
@@ -60,6 +69,7 @@ public class MacroBot extends CeejBot {
     @Override
     public void onBuildingConstructionComplete(UnitInPool unit) {
         overseer.onBuildingComplete(unit);
+        buildManager.onBuildingComplete(unit);
 
     }
 
@@ -88,6 +98,7 @@ public class MacroBot extends CeejBot {
 
     @Override
     public void onUnitDestroyed(UnitInPool unitInPool) {
+        overseer.onUnitDestroyed(unitInPool);
     }
 
     @Override

@@ -2,3 +2,5 @@
 MacroBot.iml
 .vertx/
 target/
+log/
+logs/

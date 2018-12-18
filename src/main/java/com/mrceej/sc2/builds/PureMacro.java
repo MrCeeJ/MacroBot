@@ -4,18 +4,20 @@ import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.mrceej.sc2.CeejBot;
 import com.mrceej.sc2.macroBot.BuildManager;
+import com.mrceej.sc2.macroBot.MacroBot;
 import com.mrceej.sc2.macroBot.Utils;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
 
 import static com.github.ocraft.s2client.protocol.data.Units.ZERG_OVERLORD;
 
+@Log4j2
 public class PureMacro extends Build {
 
-    private static final int DEFAULT_SATURATION = 18;
-    int minerals;
+    private static final int DEFAULT_SATURATION = 14;
+    private int minerals;
     private int supplyUsed;
     private int supplyCap;
     private Utils utils;
@@ -23,14 +25,16 @@ public class PureMacro extends Build {
     private List<UnitInPool> drones;
     private List<UnitInPool> bases;
 
-    public PureMacro(CeejBot agent, BuildManager buildManager) {
+    public PureMacro(MacroBot agent) {
         super(agent);
         this.utils = new Utils(agent);
-        this.buildManager = buildManager;
+    }
+    public void init() {
+        this.buildManager = agent.getBuildManager();
     }
 
-    @Override
-    public UnitType getNextBuildItem() {
+
+    private UnitType getNextBuildItem() {
         this.minerals = agent.observation().getMinerals();
         this.supplyUsed = agent.observation().getFoodUsed();
         this.supplyCap = agent.observation().getFoodCap();
@@ -40,6 +44,7 @@ public class PureMacro extends Build {
         if (checkOverlords()) {
             return ZERG_OVERLORD;
         } else if (checkBases()) {
+            log.info("Need a Hatchery STAT!");
             return Units.ZERG_HATCHERY;
         } else if (checkDrones()) {
             return Units.ZERG_DRONE;

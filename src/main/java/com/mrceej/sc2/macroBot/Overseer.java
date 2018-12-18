@@ -1,29 +1,29 @@
 package com.mrceej.sc2.macroBot;
 
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
-import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
-import com.mrceej.sc2.CeejBot;
-import com.mrceej.sc2.builds.Build;
+import com.github.ocraft.s2client.protocol.unit.Tag;
+import com.mrceej.sc2.things.Base;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 
 @Log4j2
-public class Overseer {
-    private final CeejBot agent;
-    private Build build;
+class Overseer {
+    private final MacroBot agent;
     private Utils utils;
+    private final Map<Tag, Base> bases;
 
-    Overseer(CeejBot macroBot, Intel intel, Build build, Utils utils) {
+    Overseer(MacroBot macroBot) {
         this.agent = macroBot;
-        this.build = build;
-        this.utils = utils;
+        this.bases = new HashMap<>();
+    }
+
+    public void init() {
+        this.utils =agent.getUtils();
     }
 
     void update() {
@@ -31,21 +31,36 @@ public class Overseer {
     }
 
     void onUnitCreated(UnitInPool unit) {
+        log.info("Unit created :" + unit.unit().getType() + " tag:" + unit.getTag());
         Units type = (Units) unit.unit().getType();
         switch (type) {
+            case ZERG_HATCHERY:
+                checkForCompleteBuilding(unit);
             case ZERG_DRONE:
+                getNearestBase(unit).allocateWorker(unit);
                 break;
             case ZERG_QUEEN:
                 break;
         }
     }
 
+    private void checkForCompleteBuilding(UnitInPool unit) {
+        if (unit.unit().getBuildProgress() == 1f) {
+            onBuildingComplete(unit);
+        }
+    }
+
     void onBuildingComplete(UnitInPool unit) {
+        log.info("Building created :" + unit.unit().getType() + " tag:" + unit.getTag());
         Units type = (Units) unit.unit().getType();
         switch (type) {
             case ZERG_HATCHERY:
+                bases.put(unit.getTag(), new Base(agent, utils, unit));
+                balanceDrones();
+                break;
             case ZERG_LAIR:
             case ZERG_HIVE:
+                upgradeBase(unit);
                 balanceDrones();
                 break;
             case ZERG_SPAWNING_POOL:
@@ -53,56 +68,77 @@ public class Overseer {
         }
     }
 
-
-
+    private void upgradeBase(UnitInPool unit) {
+        Base base = bases.get(unit.getTag());
+        base.updateUnit(unit);
+    }
 
     private void balanceDrones() {
-        List<UnitInPool> bases = utils.getBases();
         if (bases.size() < 2) {
             return;
         }
         int workers = agent.observation().getFoodWorkers();
         int average = workers / bases.size();
 
-        List<SimpleEntry<UnitInPool, Integer>> basesOver = new ArrayList<>();
-        List<SimpleEntry<UnitInPool, Integer>> basesUnder = new ArrayList<>();
+        List<SimpleEntry<Base, Integer>> basesOver = new ArrayList<>();
+        List<SimpleEntry<Base, Integer>> basesUnder = new ArrayList<>();
 
-        for (UnitInPool base : bases) {
-            int assignedWorkers = base.unit().getAssignedHarvesters().orElse(0);
+        for (Base base : bases.values()) {
+            int assignedWorkers = base.countMineralWorkers();
             if (assignedWorkers > average) {
-                log.info("Base : " + base.getTag().toString() + " Assigned too many workers :" + assignedWorkers + " - average :" + average);
                 basesOver.add(new SimpleEntry<>(base, assignedWorkers - average));
-            } else if (assignedWorkers < average) {
+                log.info("Base : " + base.getTag().toString() + " Assigned too many workers :" + assignedWorkers + " - average :" + average);
+            } else if (base.countMineralWorkers() < average) {
                 basesUnder.add(new SimpleEntry<>(base, average - assignedWorkers));
                 log.info("Base : " + base.getTag().toString() + " Assigned too few workers :" + assignedWorkers + " - average :" + average);
             } else {
                 log.info("Base : " + base.getTag().toString() + " Assigned just enough workers :" + assignedWorkers + " - average :" + average);
             }
-
-            if (basesOver.size() > 0 && basesUnder.size() > 0) {
-                basesOver.sort(getWorkerComparator());
-                basesUnder.sort(getWorkerComparator());
-                for (SimpleEntry<UnitInPool, Integer> overEntry : basesOver) {
-                    int over = overEntry.getValue();
-                    for (SimpleEntry<UnitInPool, Integer> underEntry : basesOver) {
-                        int under = underEntry.getValue();
-                        if (over >= under) {
-                            reassignWorkers( under, overEntry.getKey(), underEntry.getKey());
-                            over -= under;
-                        } else {
-                            reassignWorkers( over, overEntry.getKey(), underEntry.getKey());
-                            break;
-                        }
-                        if (over == 0) {
-                            break;
-                        }
+        }
+        if (basesOver.size() > 0 && basesUnder.size() > 0) {
+            basesOver.sort(getWorkerComparator());
+            basesUnder.sort(getWorkerComparator());
+            for (SimpleEntry<Base, Integer> overEntry : basesOver) {
+                int over = overEntry.getValue();
+                Base overBase = overEntry.getKey();
+                for (SimpleEntry<Base, Integer> underEntry : basesUnder) {
+                    int under = underEntry.getValue();
+                    Base underBase = underEntry.getKey();
+                    if (over >= under) {
+                        moveDrones(under, overBase, underBase);
+                        over -= under;
+                    } else {
+                        moveDrones(over, overBase, underBase);
+                        break;
+                    }
+                    if (over == 0) {
+                        break;
                     }
                 }
             }
         }
     }
 
-    private Comparator<SimpleEntry<UnitInPool, Integer>> getWorkerComparator() {
+    private void moveDrones(int number, Base overBase, Base underBase) {
+        log.info("Moving  : " + number + " drones from base:" + overBase.getTag() + " to :" + underBase.getTag());
+        for (int i = 0; i < number; i++) {
+            underBase.allocateWorker(overBase.getWorker());
+        }
+    }
+
+    private Base getNearestBase(UnitInPool unit) {
+        return getNearestBase(unit.unit().getPosition().toPoint2d());
+    }
+
+    private Base getNearestBase(Point2d point) {
+        if (bases.size() == 1) {
+            return (Base) bases.values().toArray()[0];
+        } else {
+            return bases.values().stream().min(utils.getLinearDistanceComparatorForBase(point)).orElse(null);
+        }
+    }
+
+    private Comparator<SimpleEntry<Base, Integer>> getWorkerComparator() {
         return (b1, b2) -> {
             Integer i1 = b1.getValue();
             Integer i2 = b2.getValue();
@@ -110,18 +146,22 @@ public class Overseer {
         };
     }
 
-    private void reassignWorkers(int i, UnitInPool from, UnitInPool to) {
-        List<UnitInPool> workers = getNWorkersFromBase(i, from);
-        Point2d target = utils.findNearestMineralPatch(to.unit().getPosition().toPoint2d()).unit().getPosition().toPoint2d();
-        for (UnitInPool u : workers) {
-            agent.actions().unitCommand(u.unit(), Abilities.SMART, target, false);
+    void onUnitDestroyed(UnitInPool unitInPool) {
+        Units type = (Units)unitInPool.unit().getType();
+        switch (type) {
+            case ZERG_DRONE:
+                removeDroneFromBase(unitInPool);
+                break;
+            case ZERG_HATCHERY:
+                break;
         }
     }
 
-    private List<UnitInPool> getNWorkersFromBase(int i, UnitInPool from) {
-        List<UnitInPool> drones = utils.getAllUnitsOfType(Units.ZERG_DRONE);
-        drones.sort(utils.getLinearDistanceComparatorForUnit(from.unit().getPosition().toPoint2d()));
-        return drones.subList(0, i);
-
+    void removeDroneFromBase(UnitInPool unitInPool) {
+        for (Base base : bases.values()){
+            base.removeWorker(unitInPool);
+        }
     }
+
+
 }
