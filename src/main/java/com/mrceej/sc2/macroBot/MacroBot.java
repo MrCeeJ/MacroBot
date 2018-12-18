@@ -31,7 +31,7 @@ public class MacroBot extends CeejBot {
         this.utils = new Utils(this);
         this.buildManager = new BuildManager(this, utils);
         this.build = new PureMacro(this, buildManager);
-        this.overseer = new Overseer(this, intel, build);
+        this.overseer = new Overseer(this, intel, build, utils);
     }
 
     private void runAI() {
@@ -54,11 +54,12 @@ public class MacroBot extends CeejBot {
 
     @Override
     public void onUnitCreated(UnitInPool unit) {
-
+        overseer.onUnitCreated(unit);
     }
 
     @Override
     public void onBuildingConstructionComplete(UnitInPool unit) {
+        overseer.onBuildingComplete(unit);
 
     }
 

@@ -5,12 +5,10 @@ import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Ability;
 import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.github.ocraft.s2client.protocol.spatial.Point;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.mrceej.sc2.CeejBot;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,7 +41,7 @@ public class BuildManager {
         }
     }
     private void buildHatchery() {
-        Point2d location = getNearestExpansionLocationTo(agent.observation().getStartLocation().toPoint2d());
+        Point2d location = utils.getNearestExpansionLocationTo(agent.observation().getStartLocation().toPoint2d());
         Optional<UnitInPool> unitOptional = getNearestFreeDrone(location);
         unitOptional.ifPresent(unit -> agent.actions().unitCommand(unit.unit(), Abilities.BUILD_HATCHERY, location, false));
     }
@@ -52,7 +50,7 @@ public class BuildManager {
         return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(ZERG_DRONE)).stream()
                 .filter(unit -> unit.unit().getOrders().size() == 1)
                 .filter(unit -> unit.unit().getOrders().get(0).getAbility().equals(Abilities.HARVEST_GATHER))
-                .min(getLinearDistanceComparatorForUnit(location));
+                .min(utils.getLinearDistanceComparatorForUnit(location));
     }
 
     private void buildBuilding(UnitType unit) {
@@ -73,26 +71,10 @@ public class BuildManager {
         return agent.observation().getUnitTypeData(false).get(unitType).getAbility().orElse(Abilities.INVALID);
     }
 
-    private Point2d getNearestExpansionLocationTo(Point2d source) {
-        return agent.query().calculateExpansionLocations(agent.observation()).stream()
-                .map(Point::toPoint2d)
-                .min(getLinearDistanceComparatorForPoint2d(source))
-                .orElseGet(null);
-    }
-
-    private Comparator<UnitInPool> getLinearDistanceComparatorForUnit(Point2d location) {
-        return (u1, u2) -> {
-            Double d1 = u1.unit().getPosition().toPoint2d().distance(location);
-            Double d2 = u2.unit().getPosition().toPoint2d().distance(location);
-            return d1.compareTo(d2);
-        };
-    }
-
-    private Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
-        return (p1, p2) -> {
-            Double d1 = p1.distance(source);
-            Double d2 = p2.distance(source);
-            return d1.compareTo(d2);
-        };
+    public boolean buildingUnit(UnitType units) {
+        //TODO: determine what egg turns into
+//        return agent.observation().getUnits(Alliance.SELF, u -> u.unit().getType().equals(ZERG_EGG)).stream()
+//                .anyMatch(e -> e.unit().);
+        return false;
     }
 }
