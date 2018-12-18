@@ -38,6 +38,7 @@ public class Base {
         this.extractors = new ArrayList<>();
         this.mineralWorkers = new ArrayList<>();
         this.queens = new ArrayList<>();
+        agent.actions().unitCommand(base.unit(), Abilities.RALLY_HATCHERY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit().getPosition().toPoint2d(),false);
     }
 
     public void allocateWorker(UnitInPool unit) {

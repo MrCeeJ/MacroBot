@@ -164,4 +164,18 @@ class Overseer {
     }
 
 
+    public void onUnitIdle(UnitInPool unitInPool) {
+        Units type = (Units)unitInPool.unit().getType();
+        switch (type) {
+            case ZERG_EGG:
+                addEggToBase();
+                break;
+            case ZERG_HATCHERY:
+                break;
+        }
+    }
+
+    private void addEggToBase() {
+
+    }
 }

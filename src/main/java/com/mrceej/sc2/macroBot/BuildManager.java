@@ -9,10 +9,7 @@ import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import lombok.extern.log4j.Log4j2;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
@@ -23,6 +20,7 @@ public class BuildManager {
     private Utils utils;
     private Overseer overseer;
     private final Map<UnitType, Integer> buildingCounts;
+    private Random random = new Random();
 
     public BuildManager(MacroBot agent) {
         this.agent = agent;
@@ -34,6 +32,10 @@ public class BuildManager {
     }
 
     public void build(UnitType unit) {
+        build(unit, agent.observation().getStartLocation().toPoint2d());
+    }
+
+    public void build(UnitType unit, Point2d location) {
         Units item = (Units) unit;
         switch (item) {
             case ZERG_DRONE:
@@ -44,7 +46,7 @@ public class BuildManager {
                 buildHatchery();
                 break;
             case ZERG_SPAWNING_POOL:
-                buildBuilding(unit);
+                buildBuilding(unit, location);
                 break;
 
         }
@@ -65,7 +67,7 @@ public class BuildManager {
                 log.info("Drone "+unit.getTag()+" placing hatchery at :" + location);
                 overseer.removeDroneFromBase(unit);
                 agent.actions().unitCommand(unit.unit(), Abilities.MOVE, location, false);
-                agent.actions().unitCommand(unit.unit(), Abilities.BUILD_HATCHERY, location, true);
+                agent.actions().unitCommand(unit.unit(), Abilities.BUILD_HATCHERY, location, false);
                 buildingCounts.put(ZERG_HATCHERY, 1);
             }
         }
@@ -78,10 +80,10 @@ public class BuildManager {
                 .min(utils.getLinearDistanceComparatorForUnit(location));
     }
 
-    private void buildBuilding(UnitType unit) {
+    private void buildBuilding(UnitType unit, Point2d location) {
         List<UnitInPool> drones = utils.getAllUnitsOfType(Units.ZERG_DRONE);
         if (drones.size() > 0) {
-            agent.actions().unitCommand(drones.get(0).unit(), getAbilityToMakeUnit(unit), false);
+            agent.actions().unitCommand(drones.get(0).unit(), getAbilityToMakeUnit(unit), getRandomLocationNearLocationForStructure(unit,location ), false);
         }
     }
 
@@ -113,5 +115,23 @@ public class BuildManager {
 
     }
 
+    private Point2d getRandomLocationNearLocationForStructure(UnitType structure, Point2d location) {
+        Ability ability = getAbilityToMakeUnit(structure);
+        Point2d newLocation;
+        float dx;
+        float dy;
+        for (int tries = 0; tries < 1000; tries ++) {
+            dx = 30 * (random.nextFloat() -1);
+            dy = 30 * (random.nextFloat() -1);
+            newLocation = Point2d.of(location.getX() + dx, location.getY() + dy);
+            if (location.distance(newLocation) > 5) {
+                if (agent.query().placement(ability, newLocation)) {
+                    return newLocation;
+                }
+            }
+        }
+        log.warn("Warning, unable to place building!");
+        return null;
+    }
 
 }

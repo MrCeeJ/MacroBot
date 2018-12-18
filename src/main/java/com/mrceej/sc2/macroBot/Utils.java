@@ -48,7 +48,7 @@ public class Utils {
         return agent.query().calculateExpansionLocations(agent.observation()).stream()
                 .map(Point::toPoint2d)
                 .min(getLinearDistanceComparatorForPoint2d(source))
-                .orElseGet(null);
+                .orElse(agent.observation().getStartLocation().toPoint2d());
     }
 
     Comparator<Base> getLinearDistanceComparatorForBase(Point2d location) {
@@ -65,5 +65,19 @@ public class Utils {
             Double d2 = u2.unit().getPosition().toPoint2d().distance(location);
             return d1.compareTo(d2);
         };
+    }
+
+    public UnitInPool findNearestMineralPatch(Point2d start) {
+        List<UnitInPool> units = agent.observation().getUnits(Alliance.NEUTRAL, UnitInPool.isUnit(NEUTRAL_MINERAL_FIELD));
+        double distance = Double.MAX_VALUE;
+        UnitInPool target = null;
+        for (UnitInPool unitInPool : units) {
+            double d = unitInPool.unit().getPosition().toPoint2d().distance(start);
+            if (d < distance) {
+                distance = d;
+                target = unitInPool;
+            }
+        }
+        return target;
     }
 }

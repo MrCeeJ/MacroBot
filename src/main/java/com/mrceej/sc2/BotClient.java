@@ -12,6 +12,7 @@ class BotClient {
 
     private static final Race preferredOpponentRace = Race.ZERG;
     private static final Difficulty preferredOpponentDifficulty = Difficulty.EASY;
+    private static final Race PLAYER_RACE = Race.ZERG;
 
     public static void main(String[] args) {
 
@@ -32,7 +33,7 @@ class BotClient {
     }
 
     private static Race getPlayerRace() {
-        return Race.ZERG;
+        return PLAYER_RACE;
     }
 
     private static S2Agent getPlayerBot(PlayerSettings opponent) {

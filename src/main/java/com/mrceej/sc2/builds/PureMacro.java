@@ -20,7 +20,7 @@ public class PureMacro extends Build {
     private int minerals;
     private int supplyUsed;
     private int supplyCap;
-    private Utils utils;
+    private final Utils utils;
     private BuildManager buildManager;
     private List<UnitInPool> drones;
     private List<UnitInPool> bases;
@@ -28,12 +28,9 @@ public class PureMacro extends Build {
     public PureMacro(MacroBot agent) {
         super(agent);
         this.utils = new Utils(agent);
-    }
-    public void init() {
         this.buildManager = agent.getBuildManager();
+
     }
-
-
     private UnitType getNextBuildItem() {
         this.minerals = agent.observation().getMinerals();
         this.supplyUsed = agent.observation().getFoodUsed();
@@ -66,6 +63,10 @@ public class PureMacro extends Build {
     }
 
     private boolean checkBases() {
+        if (bases.size() == 0){
+            return true;
+        }
+
         if (drones.stream().anyMatch(u -> u.unit().getOrders().stream().anyMatch(o -> o.getAbility().equals(Abilities.BUILD_HATCHERY)))) {
             return false;
         } else
