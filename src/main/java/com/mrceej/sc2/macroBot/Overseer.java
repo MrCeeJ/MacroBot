@@ -14,16 +14,20 @@ import java.util.*;
 @Log4j2
 class Overseer {
     private final MacroBot agent;
+    private Intel intel;
     private Utils utils;
-    private final Map<Tag, Base> bases;
+    private Map<Tag, Base> bases;
 
     Overseer(MacroBot macroBot) {
         this.agent = macroBot;
-        this.bases = new HashMap<>();
+
     }
 
     public void init() {
         this.utils =agent.getUtils();
+        this.intel = agent.getIntel();
+        this.bases = new HashMap<>();
+
     }
 
     void update() {
@@ -36,6 +40,7 @@ class Overseer {
         switch (type) {
             case ZERG_HATCHERY:
                 checkForCompleteBuilding(unit);
+                break;
             case ZERG_DRONE:
                 getNearestBase(unit).allocateWorker(unit);
                 break;
@@ -57,6 +62,7 @@ class Overseer {
             case ZERG_HATCHERY:
                 bases.put(unit.getTag(), new Base(agent, utils, unit));
                 balanceDrones();
+                checkBasesForQueens();
                 break;
             case ZERG_LAIR:
             case ZERG_HIVE:
@@ -64,7 +70,16 @@ class Overseer {
                 balanceDrones();
                 break;
             case ZERG_SPAWNING_POOL:
+                checkBasesForQueens();
                 break;
+        }
+    }
+
+    private void checkBasesForQueens() {
+        for (Base base : bases.values()) {
+            if (!base.hasQueen()) {
+                intel.requestQueen(base);
+            }
         }
     }
 

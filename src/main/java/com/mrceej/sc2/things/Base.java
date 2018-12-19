@@ -13,6 +13,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @EqualsAndHashCode
 public class Base {
@@ -27,6 +28,7 @@ public class Base {
     final List<UnitInPool> extractors;
     final List<UnitInPool> mineralWorkers;
     final List<UnitInPool> queens;
+    private Random random = new Random();
 
     public Base(CeejBot agent, Utils utils, UnitInPool base) {
         this.agent = agent;
@@ -38,12 +40,24 @@ public class Base {
         this.extractors = new ArrayList<>();
         this.mineralWorkers = new ArrayList<>();
         this.queens = new ArrayList<>();
-        agent.actions().unitCommand(base.unit(), Abilities.RALLY_HATCHERY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit().getPosition().toPoint2d(),false);
+        agent.actions().unitCommand(base.unit(), Abilities.RALLY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit(),false);
+    }
+
+    public boolean hasQueen() {
+        return queens.size() > 0;
+    }
+
+    public void allocateQueen(UnitInPool queen) {
+        this.queens.add(queen);
+    }
+    public void removeQueen(UnitInPool queen) {
+        this.queens.remove(queen);
     }
 
     public void allocateWorker(UnitInPool unit) {
         this.mineralWorkers.add(unit);
 
+        //TODO: Not picking up assigned workers
         for (UnitInPool mineral : minerals) {
             if (mineral.unit().getAssignedHarvesters().isPresent()) {
                 if (mineral.unit().getAssignedHarvesters().get() < 2) {
@@ -52,7 +66,9 @@ public class Base {
                 }
             }
         }
-        Unit target = minerals.get(0).unit();
+        // Backup random selection
+        int choice  = random.nextInt(minerals.size());
+        Unit target = minerals.get(choice).unit();
         agent.actions().unitCommand(unit.unit(), Abilities.SMART, target, false);
     }
 

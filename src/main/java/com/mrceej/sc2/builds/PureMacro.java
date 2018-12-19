@@ -32,11 +32,7 @@ public class PureMacro extends Build {
 
     }
     private UnitType getNextBuildItem() {
-        this.minerals = agent.observation().getMinerals();
-        this.supplyUsed = agent.observation().getFoodUsed();
-        this.supplyCap = agent.observation().getFoodCap();
-        this.drones = utils.getDrones();
-        this.bases = utils.getBases();
+
 
         if (checkOverlords()) {
             return ZERG_OVERLORD;
@@ -52,14 +48,24 @@ public class PureMacro extends Build {
 
     @Override
     public void update() {
+        this.minerals = agent.observation().getMinerals();
+        this.supplyUsed = agent.observation().getFoodUsed();
+        this.supplyCap = agent.observation().getFoodCap();
+        this.drones = utils.getDrones();
+        this.bases = utils.getBases();
+    }
+
+    public boolean build() {
         UnitType unit = getNextBuildItem();
         if (unit != Units.INVALID) {
-            buildManager.build(unit);
+            return buildManager.build(unit);
         }
+        return false;
     }
 
     private boolean checkDrones() {
-        return minerals >= 50 && drones.size() < 90;
+        return supplyUsed < supplyCap &&
+                minerals >= 50 && drones.size() < 90;
     }
 
     private boolean checkBases() {
@@ -70,7 +76,7 @@ public class PureMacro extends Build {
         if (drones.stream().anyMatch(u -> u.unit().getOrders().stream().anyMatch(o -> o.getAbility().equals(Abilities.BUILD_HATCHERY)))) {
             return false;
         } else
-            return drones.size() / bases.size() > DEFAULT_SATURATION && minerals >= 250;
+            return drones.size() / bases.size() > DEFAULT_SATURATION && minerals >= 300;
     }
 
     private boolean checkOverlords() {
@@ -78,8 +84,10 @@ public class PureMacro extends Build {
         if (buildManager.buildingUnit(ZERG_OVERLORD)) {
             return false;
         }
-        int buffer = 2 + (supplyUsed / 10);
-        return (supplyCap < 200 && supplyCap < supplyUsed + buffer);
+        int buffer = supplyUsed / 10;
+        return (minerals >= 100 &&
+                supplyCap < 200 &&
+                supplyCap < supplyUsed + buffer);
 
     }
 }

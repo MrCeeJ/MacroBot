@@ -7,6 +7,9 @@ import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
+import com.github.ocraft.s2client.protocol.unit.Tag;
+import com.github.ocraft.s2client.protocol.unit.Unit;
+import com.mrceej.sc2.things.Base;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.*;
@@ -19,58 +22,89 @@ public class BuildManager {
     private final MacroBot agent;
     private Utils utils;
     private Overseer overseer;
-    private final Map<UnitType, Integer> buildingCounts;
+    private Map<UnitType, Integer> buildingCounts;
     private Random random = new Random();
+    private List<Tag> workerTags;
 
     public BuildManager(MacroBot agent) {
         this.agent = agent;
-        this.buildingCounts = new HashMap<>();
     }
+
     public void init() {
         this.utils = agent.getUtils();
         this.overseer = agent.getOverseer();
+        this.buildingCounts = new HashMap<>();
+        this.workerTags = new ArrayList<>();
+
     }
 
-    public void build(UnitType unit) {
-        build(unit, agent.observation().getStartLocation().toPoint2d());
+    public boolean build(UnitType unit) {
+        return build(unit, agent.observation().getStartLocation().toPoint2d());
     }
 
-    public void build(UnitType unit, Point2d location) {
+    public boolean build(UnitType unit, Point2d location) {
         Units item = (Units) unit;
         switch (item) {
             case ZERG_DRONE:
             case ZERG_OVERLORD:
-                buildUnit(unit);
-                break;
+                return buildUnit(unit);
             case ZERG_HATCHERY:
-                buildHatchery();
-                break;
+                return buildHatchery();
             case ZERG_SPAWNING_POOL:
-                buildBuilding(unit, location);
-                break;
-
+            case ZERG_EVOLUTION_CHAMBER:
+                return buildBuilding(unit, location);
+            default:
+                throw new UnsupportedOperationException("Sorry, don't know how to build " + item);
         }
     }
 
-    private void buildHatchery() {
-        if (buildingCounts.containsKey(ZERG_HATCHERY) && buildingCounts.get(ZERG_HATCHERY) > 0) {
+    public boolean build(UnitType unit, Base base) {
+        if (base == null) {
+            return build(unit);
+        }
+        Units item = (Units) unit;
+        switch (item) {
+            case ZERG_QUEEN:
+                return buildQueen(base);
+            case ZERG_LAIR:
+            case ZERG_HIVE:
+            default:
+                throw new UnsupportedOperationException("Sorry, don't know how to build " + item + " at :" + base);
+        }
+
+    }
+
+    private boolean buildQueen(Base base) {
+        Unit hatch = base.getBase().unit();
+        buildingCounts.put(ZERG_QUEEN, 1);
+        agent.actions().unitCommand(hatch, Abilities.TRAIN_QUEEN, false);
+        return true;
+    }
+
+    public boolean buildingUnit(Units unit) {
+        return (buildingCounts.containsKey(unit) && buildingCounts.get(unit) > 0);
+    }
+
+    private boolean buildHatchery() {
+        if (buildingUnit(ZERG_HATCHERY)) {
             log.info("Not placing hatchery, building " + buildingCounts.get(ZERG_HATCHERY) + " already.");
         } else {
             Point2d location = utils.getNearestExpansionLocationTo(agent.observation().getStartLocation().toPoint2d());
             Optional<UnitInPool> unitOptional = getNearestFreeDrone(location);
             if (unitOptional.isEmpty()) {
                 log.info("Insufficient free workers");
-            } else if (agent.observation().getMinerals() < 250) {
+            } else if (agent.observation().getMinerals() < 300) {
                 log.info("Insufficient minerals :" + agent.observation().getMinerals());
             } else {
                 UnitInPool unit = unitOptional.get();
-                log.info("Drone "+unit.getTag()+" placing hatchery at :" + location);
+                log.info("Drone " + unit.getTag() + " placing hatchery at :" + location);
                 overseer.removeDroneFromBase(unit);
-                agent.actions().unitCommand(unit.unit(), Abilities.MOVE, location, false);
                 agent.actions().unitCommand(unit.unit(), Abilities.BUILD_HATCHERY, location, false);
                 buildingCounts.put(ZERG_HATCHERY, 1);
+                return true;
             }
         }
+        return false;
     }
 
     private Optional<UnitInPool> getNearestFreeDrone(Point2d location) {
@@ -80,18 +114,25 @@ public class BuildManager {
                 .min(utils.getLinearDistanceComparatorForUnit(location));
     }
 
-    private void buildBuilding(UnitType unit, Point2d location) {
+    private boolean buildBuilding(UnitType unit, Point2d location) {
         List<UnitInPool> drones = utils.getAllUnitsOfType(Units.ZERG_DRONE);
         if (drones.size() > 0) {
-            agent.actions().unitCommand(drones.get(0).unit(), getAbilityToMakeUnit(unit), getRandomLocationNearLocationForStructure(unit,location ), false);
+            buildingCounts.put(unit, 1);
+            agent.actions().unitCommand(drones.get(0).unit(), getAbilityToMakeUnit(unit), getRandomLocationNearLocationForStructure(unit, location), false);
+            return true;
         }
+        log.warn("Warning, unable to build building :" + unit);
+        return false;
     }
 
-    private void buildUnit(UnitType unit) {
+    private boolean buildUnit(UnitType unit) {
         List<UnitInPool> larvae = utils.getAllUnitsOfType(Units.ZERG_LARVA);
         if (larvae.size() > 0) {
+            buildingCounts.put(unit, 1);
             agent.actions().unitCommand(larvae.get(0).unit(), getAbilityToMakeUnit(unit), false);
+            return true;
         }
+        return false;
     }
 
     private Ability getAbilityToMakeUnit(UnitType unitType) {
@@ -104,8 +145,15 @@ public class BuildManager {
                 .anyMatch(e -> e.unit().getOrders().stream().anyMatch(order -> order.getAbility().equals(ability)));
     }
 
-    public void onBuildingComplete(UnitInPool unit) {
+    void onUnitComplete(UnitInPool unit) {
         UnitType type = unit.unit().getType();
+        if (type.equals(ZERG_DRONE)) {
+            if (workerTags.contains( unit.getTag())) {
+                return;
+            } else {
+                workerTags.add(unit.getTag());
+            }
+        }
         if (buildingCounts.containsKey(type)) {
             int number = buildingCounts.get(type);
             buildingCounts.put(type, number - 1);
@@ -120,9 +168,9 @@ public class BuildManager {
         Point2d newLocation;
         float dx;
         float dy;
-        for (int tries = 0; tries < 1000; tries ++) {
-            dx = 30 * (random.nextFloat() -1);
-            dy = 30 * (random.nextFloat() -1);
+        for (int tries = 0; tries < 1000; tries++) {
+            dx = 30 * (random.nextFloat() - 1);
+            dy = 30 * (random.nextFloat() - 1);
             newLocation = Point2d.of(location.getX() + dx, location.getY() + dy);
             if (location.distance(newLocation) > 5) {
                 if (agent.query().placement(ability, newLocation)) {
@@ -134,4 +182,17 @@ public class BuildManager {
         return null;
     }
 
+    public boolean handleRequest(BuildingRequest buildingRequest) {
+        boolean result = true;
+        int done = 0;
+        for (int i = 0; i < buildingRequest.count; i++) {
+            if (build(buildingRequest.type, buildingRequest.base)) {
+                done++;
+            } else {
+                result = false;
+            }
+        }
+        buildingRequest.count -= done;
+        return result;
+    }
 }

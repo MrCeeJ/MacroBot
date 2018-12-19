@@ -22,6 +22,8 @@ public class MacroBot extends CeejBot {
     private final Overseer overseer;
     @Getter
     private final BuildManager buildManager;
+    @Getter
+    private final BuildUtils buildUtils;
 
     public MacroBot(PlayerSettings opponent) {
         super(opponent, Race.ZERG);
@@ -30,11 +32,14 @@ public class MacroBot extends CeejBot {
         this.overseer = new Overseer(this);
         this.buildManager = new BuildManager(this);
         this.intel = new Intel(this);
+        this.buildUtils = new BuildUtils(this);
     }
 
     private void init() {
+        intel.init();
         overseer.init();
         buildManager.init();
+        buildUtils.init();
     }
 
     private void runAI() {
@@ -57,12 +62,13 @@ public class MacroBot extends CeejBot {
     @Override
     public void onUnitCreated(UnitInPool unit) {
         overseer.onUnitCreated(unit);
+        buildManager.onUnitComplete(unit);
     }
 
     @Override
     public void onBuildingConstructionComplete(UnitInPool unit) {
         overseer.onBuildingComplete(unit);
-        buildManager.onBuildingComplete(unit);
+        buildManager.onUnitComplete(unit);
 
     }
 
