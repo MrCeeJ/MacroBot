@@ -24,12 +24,14 @@ public class Base {
     private UnitInPool base;
     @Getter
     private final Tag tag;
-    final List<UnitInPool> minerals;
-    final List<UnitInPool> gases;
-    final List<UnitInPool> extractors;
-    final List<UnitInPool> mineralWorkers;
-    final List<UnitInPool> queens;
-    private Random random = new Random();
+    private final List<UnitInPool> minerals;
+    @Getter
+    private final List<UnitInPool> gases;
+    @Getter
+    private final List<UnitInPool> extractors;
+    private final List<UnitInPool> mineralWorkers;
+    private final List<UnitInPool> queens;
+    private final Random random = new Random();
 
     public Base(CeejBot agent, Utils utils, UnitInPool base) {
         this.agent = agent;
@@ -122,4 +124,7 @@ public class Base {
         mineralWorkers.remove(unitInPool);
     }
 
+    public void allocateExtractor(UnitInPool unit) {
+        this.extractors.add(unit);
+    }
 }

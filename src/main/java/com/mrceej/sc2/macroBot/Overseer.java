@@ -5,6 +5,7 @@ import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Tag;
 import com.mrceej.sc2.things.Base;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -14,8 +15,9 @@ import java.util.*;
 @Log4j2
 class Overseer {
     private final MacroBot agent;
-    private Intel intel;
+    private Mastermind mastermind;
     private Utils utils;
+    @Getter
     private Map<Tag, Base> bases;
 
     Overseer(MacroBot macroBot) {
@@ -25,13 +27,13 @@ class Overseer {
 
     public void init() {
         this.utils = agent.getUtils();
-        this.intel = agent.getIntel();
+        this.mastermind = agent.getMastermind();
         this.bases = new HashMap<>();
 
     }
 
     void update() {
-        for (Base b: bases.values()){
+        for (Base b : bases.values()) {
             b.update();
         }
     }
@@ -50,6 +52,11 @@ class Overseer {
                 allocateQueen(unit);
                 break;
         }
+    }
+
+    private void allocateExtractor(UnitInPool unit) {
+        Base base = getNearestBase(unit);
+        base.allocateExtractor(unit);
     }
 
     private void allocateQueen(UnitInPool unit) {
@@ -83,14 +90,19 @@ class Overseer {
                 break;
             case ZERG_SPAWNING_POOL:
                 checkBasesForQueens();
+                mastermind.onBuildingComplete(type);
                 break;
+            case ZERG_EXTRACTOR:
+                allocateExtractor(unit);
+                break;
+
         }
     }
 
     private void checkBasesForQueens() {
         for (Base base : bases.values()) {
             if (!base.hasQueen()) {
-                intel.requestQueen(base);
+                mastermind.requestQueen(base);
             }
         }
     }
@@ -191,7 +203,8 @@ class Overseer {
             base.removeWorker(unitInPool);
         }
     }
-    void removeQueenFromBase(UnitInPool unitInPool) {
+
+    private void removeQueenFromBase(UnitInPool unitInPool) {
         for (Base base : bases.values()) {
             base.removeQueen(unitInPool);
         }

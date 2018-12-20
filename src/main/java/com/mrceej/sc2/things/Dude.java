@@ -8,13 +8,13 @@ import com.github.ocraft.s2client.protocol.unit.Tag;
 import com.github.ocraft.s2client.protocol.unit.Unit;
 import lombok.Getter;
 
-public class Dude {
+class Dude {
 
-    private S2Agent agent;
+    private final S2Agent agent;
     @Getter
-    private Tag tag;
+    private final Tag tag;
     @Getter
-    private UnitInPool unitInPool;
+    private final UnitInPool unitInPool;
     @Getter
     private Unit unit;
 

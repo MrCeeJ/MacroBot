@@ -1,25 +1,23 @@
 package com.mrceej.sc2.builds;
 
-import com.github.ocraft.s2client.protocol.data.Units;
-
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.ocraft.s2client.protocol.data.Units.*;
+import static com.github.ocraft.s2client.protocol.data.Units.ZERG_EVOLUTION_CHAMBER;
+import static com.github.ocraft.s2client.protocol.data.Units.ZERG_SPAWNING_POOL;
 
 public class Plan {
 
-    public static List<SimpleEntry<Integer, Units>> buildMilestones = List.of(
-            new SimpleEntry<>(14, ZERG_SPAWNING_POOL),
+    private static final List<BuildOrderEntry> buildMilestones = List.of(
+            new BuildOrderEntry(14, ZERG_SPAWNING_POOL, true),
     //        new SimpleEntry<>(14, ZERG_EXTRACTOR),
-            new SimpleEntry<>(25, ZERG_EVOLUTION_CHAMBER));
+            new BuildOrderEntry(25, ZERG_EVOLUTION_CHAMBER, true));
 
-    public static List<Units> getCurrentState(int workers) {
-        List<Units> build = new ArrayList<>();
-        for (SimpleEntry<Integer, Units> e : buildMilestones) {
-            if (workers >= e.getKey()) {
-                build.add(e.getValue());
+    public static List<BuildOrderEntry> getCurrentState(int workers) {
+        List<BuildOrderEntry> build = new ArrayList<>();
+        for (BuildOrderEntry e : buildMilestones) {
+            if (workers >= e.getWorkers()) {
+                build.add(e);
             }
         }
         return build;

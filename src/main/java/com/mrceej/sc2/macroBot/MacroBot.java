@@ -15,9 +15,10 @@ public class MacroBot extends CeejBot {
 
     @Getter
     private final Utils utils;
-    private final Logger logger;
     @Getter
-    private final Intel intel;
+    private final Debugger debugger;
+    @Getter
+    private final Mastermind mastermind;
     @Getter
     private final Overseer overseer;
     @Getter
@@ -27,35 +28,35 @@ public class MacroBot extends CeejBot {
 
     public MacroBot(PlayerSettings opponent) {
         super(opponent, Race.ZERG);
-        this.logger = new Logger();
+        this.debugger = new Debugger(this);
         this.utils = new Utils(this);
         this.overseer = new Overseer(this);
         this.buildManager = new BuildManager(this);
-        this.intel = new Intel(this);
+        this.mastermind = new Mastermind(this);
         this.buildUtils = new BuildUtils(this);
     }
 
     private void init() {
-        intel.init();
+        mastermind.init();
         overseer.init();
         buildManager.init();
         buildUtils.init();
     }
 
     private void runAI() {
-        intel.update();
+        mastermind.update();
         overseer.update();
     }
 
     @Override
     public void onGameStart() {
-        log.info("Hello Starcraft II bots! MacroBot here!");
+        debugger.debugMessage("Hello Starcraft II bots! MacroBot here!");
         init();
     }
 
     @Override
     public void onStep() {
-        logger.debug();
+        debugger.debugMessage("Game Loop step :" + this.observation().getGameLoop());
         runAI();
     }
 

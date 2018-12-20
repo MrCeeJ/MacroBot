@@ -15,9 +15,5 @@ public abstract class Build {
         this.utils = agent.getUtils();
     }
 
-    public abstract void update();
-
-
-
     public abstract boolean build();
 }

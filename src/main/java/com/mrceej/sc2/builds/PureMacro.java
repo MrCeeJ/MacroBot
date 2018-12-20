@@ -11,6 +11,7 @@ import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
 
+import static com.github.ocraft.s2client.protocol.data.Units.ZERG_LARVA;
 import static com.github.ocraft.s2client.protocol.data.Units.ZERG_OVERLORD;
 
 @Log4j2
@@ -21,7 +22,7 @@ public class PureMacro extends Build {
     private int supplyUsed;
     private int supplyCap;
     private final Utils utils;
-    private BuildManager buildManager;
+    private final BuildManager buildManager;
     private List<UnitInPool> drones;
     private List<UnitInPool> bases;
 
@@ -35,28 +36,29 @@ public class PureMacro extends Build {
     private UnitType getNextBuildItem() {
 
 
-        if (checkOverlords()) {
+        if (checkOverlords() && hasLarvae()) {
             return ZERG_OVERLORD;
         } else if (checkBases()) {
             log.info("Need a Hatchery STAT!");
             return Units.ZERG_HATCHERY;
-        } else if (checkDrones()) {
+        } else if (checkDrones() && hasLarvae()) {
             return Units.ZERG_DRONE;
         } else {
             return Units.INVALID;
         }
     }
 
-    @Override
-    public void update() {
+    private boolean hasLarvae() {
+        return utils.getAllUnitsOfType(ZERG_LARVA).size() > 0;
+    }
+
+    public boolean build() {
         this.minerals = agent.observation().getMinerals();
         this.supplyUsed = agent.observation().getFoodUsed();
         this.supplyCap = agent.observation().getFoodCap();
         this.drones = utils.getDrones();
         this.bases = utils.getBases();
-    }
 
-    public boolean build() {
         UnitType unit = getNextBuildItem();
         if (unit != Units.INVALID) {
             return buildManager.build(unit);
@@ -85,7 +87,7 @@ public class PureMacro extends Build {
         if (buildManager.buildingUnit(ZERG_OVERLORD)) {
             return false;
         }
-        int buffer = 1 + supplyUsed / 10;
+        int buffer = supplyUsed / 8;
         return (minerals >= 100 &&
                 supplyCap < 200 &&
                 supplyCap < supplyUsed + buffer);
