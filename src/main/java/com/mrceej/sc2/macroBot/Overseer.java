@@ -24,14 +24,16 @@ class Overseer {
     }
 
     public void init() {
-        this.utils =agent.getUtils();
+        this.utils = agent.getUtils();
         this.intel = agent.getIntel();
         this.bases = new HashMap<>();
 
     }
 
     void update() {
-
+        for (Base b: bases.values()){
+            b.update();
+        }
     }
 
     void onUnitCreated(UnitInPool unit) {
@@ -45,7 +47,17 @@ class Overseer {
                 getNearestBase(unit).allocateWorker(unit);
                 break;
             case ZERG_QUEEN:
+                allocateQueen(unit);
                 break;
+        }
+    }
+
+    private void allocateQueen(UnitInPool unit) {
+        Base base = getNearestBase(unit);
+        if (base.hasQueen()) {
+            //TODO: add to army
+        } else {
+            base.allocateQueen(unit);
         }
     }
 
@@ -162,25 +174,32 @@ class Overseer {
     }
 
     void onUnitDestroyed(UnitInPool unitInPool) {
-        Units type = (Units)unitInPool.unit().getType();
+        Units type = (Units) unitInPool.unit().getType();
         switch (type) {
             case ZERG_DRONE:
                 removeDroneFromBase(unitInPool);
                 break;
+            case ZERG_QUEEN:
+                removeQueenFromBase(unitInPool);
             case ZERG_HATCHERY:
                 break;
         }
     }
 
     void removeDroneFromBase(UnitInPool unitInPool) {
-        for (Base base : bases.values()){
+        for (Base base : bases.values()) {
             base.removeWorker(unitInPool);
+        }
+    }
+    void removeQueenFromBase(UnitInPool unitInPool) {
+        for (Base base : bases.values()) {
+            base.removeQueen(unitInPool);
         }
     }
 
 
     public void onUnitIdle(UnitInPool unitInPool) {
-        Units type = (Units)unitInPool.unit().getType();
+        Units type = (Units) unitInPool.unit().getType();
         switch (type) {
             case ZERG_EGG:
                 addEggToBase();

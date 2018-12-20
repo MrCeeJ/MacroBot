@@ -31,6 +31,7 @@ public class PureMacro extends Build {
         this.buildManager = agent.getBuildManager();
 
     }
+
     private UnitType getNextBuildItem() {
 
 
@@ -69,7 +70,7 @@ public class PureMacro extends Build {
     }
 
     private boolean checkBases() {
-        if (bases.size() == 0){
+        if (bases.size() == 0) {
             return true;
         }
 
@@ -80,11 +81,11 @@ public class PureMacro extends Build {
     }
 
     private boolean checkOverlords() {
-       // if (agent.observation().getUnits(Alliance.SELF, u -> u.unit().getType().equals(Units.ZERG_EGG)).)
+        // if (agent.observation().getUnits(Alliance.SELF, u -> u.unit().getType().equals(Units.ZERG_EGG)).)
         if (buildManager.buildingUnit(ZERG_OVERLORD)) {
             return false;
         }
-        int buffer = supplyUsed / 10;
+        int buffer = 1 + supplyUsed / 10;
         return (minerals >= 100 &&
                 supplyCap < 200 &&
                 supplyCap < supplyUsed + buffer);

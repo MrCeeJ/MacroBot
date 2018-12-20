@@ -2,6 +2,7 @@ package com.mrceej.sc2.things;
 
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
+import com.github.ocraft.s2client.protocol.data.Buffs;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.github.ocraft.s2client.protocol.unit.Tag;
@@ -40,8 +41,24 @@ public class Base {
         this.extractors = new ArrayList<>();
         this.mineralWorkers = new ArrayList<>();
         this.queens = new ArrayList<>();
-        agent.actions().unitCommand(base.unit(), Abilities.RALLY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit(),false);
+        agent.actions().unitCommand(base.unit(), Abilities.RALLY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit(), false);
     }
+
+    public void update() {
+        if (hasQueen() && needsInject()) {
+            for (UnitInPool queen : queens) {
+                if (queen.unit().getEnergy().orElse(0f) >= 25) {
+                    agent.actions().unitCommand(queen.unit(), Abilities.EFFECT_INJECT_LARVA, this.base.unit(), false);
+                    break;
+                }
+            }
+        }
+    }
+
+    private boolean needsInject() {
+        return !this.base.unit().getBuffs().contains(Buffs.QUEEN_SPAWN_LARVA_TIMER);
+    }
+
 
     public boolean hasQueen() {
         return queens.size() > 0;
@@ -50,6 +67,7 @@ public class Base {
     public void allocateQueen(UnitInPool queen) {
         this.queens.add(queen);
     }
+
     public void removeQueen(UnitInPool queen) {
         this.queens.remove(queen);
     }
@@ -67,7 +85,7 @@ public class Base {
             }
         }
         // Backup random selection
-        int choice  = random.nextInt(minerals.size());
+        int choice = random.nextInt(minerals.size());
         Unit target = minerals.get(choice).unit();
         agent.actions().unitCommand(unit.unit(), Abilities.SMART, target, false);
     }
@@ -103,4 +121,5 @@ public class Base {
     public void removeWorker(UnitInPool unitInPool) {
         mineralWorkers.remove(unitInPool);
     }
+
 }
