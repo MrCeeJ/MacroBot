@@ -1,6 +1,5 @@
 package com.mrceej.sc2.macroBot;
 
-import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.mrceej.sc2.builds.Build;
 import com.mrceej.sc2.builds.BuildOrderEntry;
@@ -9,13 +8,14 @@ import com.mrceej.sc2.builds.PureMacro;
 import com.mrceej.sc2.things.Base;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
-class Mastermind {
+class MacroManager {
     private BuildManager buildManager;
     private Build currentBuild;
     private Utils utils;
@@ -27,12 +27,12 @@ class Mastermind {
     private int supplyUsed;
     private int supplyCap;
     private int droneCount;
-    private List<UnitInPool> bases;
-    private Overseer overseer;
+    private Collection<Base> bases;
+    private UnitManager unitManager;
     private int workers;
 
 
-    public Mastermind(MacroBot agent) {
+    public MacroManager(MacroBot agent) {
         this.agent = agent;
     }
 
@@ -42,12 +42,12 @@ class Mastermind {
         this.buildManager = agent.getBuildManager();
         this.requests = new LinkedList<>();
         this.buildUtils = agent.getBuildUtils();
-        this.overseer = agent.getOverseer();
+        this.unitManager = agent.getUnitManager();
     }
 
     public void update() {
         updateData();
-        checkGasses();
+        checkGassesByBase();
         checkTechRequests();
         checkUnitRequests();
         updateBuilds();
@@ -59,7 +59,7 @@ class Mastermind {
         this.supplyUsed = agent.observation().getFoodUsed();
         this.supplyCap = agent.observation().getFoodCap();
         this.droneCount = utils.getDrones().size();
-        this.bases = utils.getBases();
+        this.bases = unitManager.getBases().values();
         this.workers = utils.getAllUnitsOfType(Units.ZERG_DRONE).size();
 
     }
@@ -68,15 +68,32 @@ class Mastermind {
 
     }
 
-    private void checkGasses() {
+    private void checkGassesByBase() {
+        for (Base base : bases) {
+            if (base.countMineralWorkers() > 16) {
+                if (base.getExtractors().size() < 2) {
+                    queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
+                }
+            }
+            else if (base.countMineralWorkers() > 14) {
+                if (base.getExtractors().size() < 1) {
+                    queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
+                }
+            }
+
+        }
+    }
+
+
+    private void checkGassesByIncome() {
         float mineralIncome = agent.observation().getScore().getDetails().getCollectionRateMinerals() + 1;
         if (workers > 16 && mineralIncome > 400) {
             float gasIncome = agent.observation().getScore().getDetails().getCollectionRateVespene() + 1;
             float desiredGas = mineralIncome / 3.5f;
             if (desiredGas > gasIncome && !buildManager.buildingUnit(ZERG_EXTRACTOR)) {
-                for (Base b : overseer.getBases().values()) {
-                    if (b.getExtractors().size() < 2) {
-                        queueRequest(new BuildingRequest(ZERG_EXTRACTOR, b, false));
+                for (Base base : bases) {
+                    if (base.getExtractors().size() < 2) {
+                        queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
                         break;
                     }
                 }
@@ -132,8 +149,10 @@ class Mastermind {
     private void queueRequest(BuildingRequest request) {
         if (!requests.contains(request)) {
             if (request.isUnique() && buildManager.buildingUnit(request.type)) {
-                log.info("Already have request for a :" + request.type);
             } else {
+                if (request.type == ZERG_LAIR || request.type == ZERG_HIVE) {
+                    request.setBase(unitManager.getMain());
+                }
                 log.info("Adding request for a :" + request.type);
                 this.requests.add(request);
             }
@@ -148,6 +167,8 @@ class Mastermind {
                 queueRequest(new BuildingRequest(ZERG_ZERGLING, 2, false));
                 break;
             case ZERG_ROACH_WARREN:
+                queueRequest(new BuildingRequest(ZERG_ROACH, 8, false));
+                break;
             default:
         }
     }

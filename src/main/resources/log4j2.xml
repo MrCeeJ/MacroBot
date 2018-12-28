@@ -5,7 +5,7 @@
             <PatternLayout pattern="%d{HH:mm:ss,SSS} [%t] %-5p %c{1}:%L - %msg%n" />
         </Console>
 
-        <RollingFile name="RollingFile" filename="log/LazyBot.log"
+        <RollingFile name="RollingFile" filename="log/MacroBot.log"
                      filepattern="logs/macroBot-%d{YYYYMMddHHmmss}.log">
             <PatternLayout pattern="%d{HH:mm:ss,SSS} [%t] %-5p %c{1}:%L - %msg%n" />
             <Policies>

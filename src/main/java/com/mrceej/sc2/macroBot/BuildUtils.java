@@ -109,6 +109,8 @@ class BuildUtils {
                 return 200;
             case ZERG_GREATER_SPIRE:
                 return 100;
+            case ZERG_ZERGLING:
+                return 50;
             default:
                 return queryMineralCost(unit);
         }

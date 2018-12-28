@@ -18,9 +18,9 @@ public class MacroBot extends CeejBot {
     @Getter
     private final Debugger debugger;
     @Getter
-    private final Mastermind mastermind;
+    private final MacroManager macroManager;
     @Getter
-    private final Overseer overseer;
+    private final UnitManager unitManager;
     @Getter
     private final BuildManager buildManager;
     @Getter
@@ -30,22 +30,22 @@ public class MacroBot extends CeejBot {
         super(opponent, Race.ZERG);
         this.debugger = new Debugger(this);
         this.utils = new Utils(this);
-        this.overseer = new Overseer(this);
+        this.unitManager = new UnitManager(this);
         this.buildManager = new BuildManager(this);
-        this.mastermind = new Mastermind(this);
+        this.macroManager = new MacroManager(this);
         this.buildUtils = new BuildUtils(this);
     }
 
     private void init() {
-        mastermind.init();
-        overseer.init();
+        macroManager.init();
+        unitManager.init();
         buildManager.init();
         buildUtils.init();
     }
 
     private void runAI() {
-        mastermind.update();
-        overseer.update();
+        macroManager.update();
+        unitManager.update();
     }
 
     @Override
@@ -62,20 +62,20 @@ public class MacroBot extends CeejBot {
 
     @Override
     public void onUnitCreated(UnitInPool unit) {
-        overseer.onUnitCreated(unit);
+        unitManager.onUnitCreated(unit);
         buildManager.onUnitComplete(unit);
     }
 
     @Override
     public void onBuildingConstructionComplete(UnitInPool unit) {
-        overseer.onBuildingComplete(unit);
+        unitManager.onBuildingComplete(unit);
         buildManager.onUnitComplete(unit);
 
     }
 
     @Override
     public void onUnitIdle(UnitInPool unitInPool) {
-        overseer.onUnitIdle(unitInPool);
+        unitManager.onUnitIdle(unitInPool);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class MacroBot extends CeejBot {
 
     @Override
     public void onUnitDestroyed(UnitInPool unitInPool) {
-        overseer.onUnitDestroyed(unitInPool);
+        unitManager.onUnitDestroyed(unitInPool);
     }
 
     @Override

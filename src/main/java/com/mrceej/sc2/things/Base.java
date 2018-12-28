@@ -11,15 +11,19 @@ import com.mrceej.sc2.CeejBot;
 import com.mrceej.sc2.macroBot.Utils;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+@Log4j2
 @EqualsAndHashCode
 public class Base {
     private final CeejBot agent;
     private final Utils utils;
+    private final ArrayList<Object> gasWorkers;
+    private final Army army;
     @Getter
     private UnitInPool base;
     @Getter
@@ -42,7 +46,9 @@ public class Base {
         this.gases = findGases();
         this.extractors = new ArrayList<>();
         this.mineralWorkers = new ArrayList<>();
+        this.gasWorkers = new ArrayList<>();
         this.queens = new ArrayList<>();
+        this.army = new Army();
         agent.actions().unitCommand(base.unit(), Abilities.RALLY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit(), false);
     }
 
@@ -75,21 +81,14 @@ public class Base {
     }
 
     public void allocateWorker(UnitInPool unit) {
-        this.mineralWorkers.add(unit);
+        if (!mineralWorkers.contains(unit) && !gasWorkers.contains(unit)) {
+            this.mineralWorkers.add(unit);
 
-        //TODO: Not picking up assigned workers
-        for (UnitInPool mineral : minerals) {
-            if (mineral.unit().getAssignedHarvesters().isPresent()) {
-                if (mineral.unit().getAssignedHarvesters().get() < 2) {
-                    agent.actions().unitCommand(unit.unit(), Abilities.SMART, mineral.unit(), false);
-                    return;
-                }
-            }
+            // Backup random allocation
+            int choice = random.nextInt(minerals.size());
+            Unit target = minerals.get(choice).unit();
+            agent.actions().unitCommand(unit.unit(), Abilities.SMART, target, false);
         }
-        // Backup random selection
-        int choice = random.nextInt(minerals.size());
-        Unit target = minerals.get(choice).unit();
-        agent.actions().unitCommand(unit.unit(), Abilities.SMART, target, false);
     }
 
     public UnitInPool getWorker() {
@@ -99,6 +98,10 @@ public class Base {
             return worker;
         }
         return null;
+    }
+
+    public int countGasWorkers() {
+        return this.gasWorkers.size();
     }
 
     public int countMineralWorkers() {
@@ -124,7 +127,21 @@ public class Base {
         mineralWorkers.remove(unitInPool);
     }
 
-    public void allocateExtractor(UnitInPool unit) {
-        this.extractors.add(unit);
+    public void transferDronesToExtractor(UnitInPool extractor) {
+        List<UnitInPool> drones = this.mineralWorkers.subList(0, 3);
+        for (UnitInPool drone : drones) {
+            log.info("Re-assigning drone to gas :" + drone.getTag());
+            agent.actions().unitCommand(drone.unit(), Abilities.SMART, extractor.unit(), false);
+        }
+        this.gasWorkers.addAll(drones);
+        this.mineralWorkers.removeAll(drones);
+
     }
+
+    public void allocateExtractor(UnitInPool extractor) {
+        this.extractors.add(extractor);
+       }
+       public void allocateUnitToArmy(UnitInPool unit) {
+        this.army.add(unit);
+       }
 }

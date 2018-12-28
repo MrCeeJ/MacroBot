@@ -13,6 +13,7 @@ import java.util.List;
 
 import static com.github.ocraft.s2client.protocol.data.Units.ZERG_LARVA;
 import static com.github.ocraft.s2client.protocol.data.Units.ZERG_OVERLORD;
+import static java.lang.Math.max;
 
 @Log4j2
 public class PureMacro extends Build {
@@ -68,7 +69,8 @@ public class PureMacro extends Build {
 
     private boolean checkDrones() {
         return supplyUsed < supplyCap &&
-                minerals >= 50 && drones.size() < 90;
+                minerals >= 50 &&
+                drones.size() < 90;
     }
 
     private boolean checkBases() {
@@ -83,14 +85,17 @@ public class PureMacro extends Build {
     }
 
     private boolean checkOverlords() {
-        // if (agent.observation().getUnits(Alliance.SELF, u -> u.unit().getType().equals(Units.ZERG_EGG)).)
         if (buildManager.buildingUnit(ZERG_OVERLORD)) {
             return false;
         }
-        int buffer = supplyUsed / 8;
+        int eggs = utils.getAllUnitsOfType(ZERG_LARVA).size();
+        int bases = utils.getBases().size();
+        int realBuffer = (eggs + bases) * 2;
+        int defaultBuffer = supplyUsed / 6;
+
         return (minerals >= 100 &&
                 supplyCap < 200 &&
-                supplyCap < supplyUsed + buffer);
+                supplyCap < supplyUsed + max(realBuffer,defaultBuffer));
 
     }
 }

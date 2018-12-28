@@ -6,6 +6,7 @@ import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Tag;
 import com.mrceej.sc2.things.Base;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -13,22 +14,27 @@ import java.util.*;
 
 
 @Log4j2
-class Overseer {
+class UnitManager {
     private final MacroBot agent;
-    private Mastermind mastermind;
+    private MacroManager macroManager;
     private Utils utils;
     @Getter
     private Map<Tag, Base> bases;
+    @Getter
+    @Setter
+    private Base main;
+    private ArmyManager armyManager;
 
-    Overseer(MacroBot macroBot) {
+    UnitManager(MacroBot macroBot) {
         this.agent = macroBot;
 
     }
 
     public void init() {
         this.utils = agent.getUtils();
-        this.mastermind = agent.getMastermind();
+        this.macroManager = agent.getMacroManager();
         this.bases = new HashMap<>();
+        this.armyManager = new ArmyManager();
 
     }
 
@@ -43,7 +49,7 @@ class Overseer {
         Units type = (Units) unit.unit().getType();
         switch (type) {
             case ZERG_HATCHERY:
-                checkForCompleteBuilding(unit);
+                checkForMain(unit);
                 break;
             case ZERG_DRONE:
                 getNearestBase(unit).allocateWorker(unit);
@@ -51,26 +57,20 @@ class Overseer {
             case ZERG_QUEEN:
                 allocateQueen(unit);
                 break;
-        }
-    }
-
-    private void allocateExtractor(UnitInPool unit) {
-        Base base = getNearestBase(unit);
-        base.allocateExtractor(unit);
-    }
-
-    private void allocateQueen(UnitInPool unit) {
-        Base base = getNearestBase(unit);
-        if (base.hasQueen()) {
-            //TODO: add to army
-        } else {
-            base.allocateQueen(unit);
-        }
-    }
-
-    private void checkForCompleteBuilding(UnitInPool unit) {
-        if (unit.unit().getBuildProgress() == 1f) {
-            onBuildingComplete(unit);
+            case ZERG_EXTRACTOR:
+                allocateExtractor(unit);
+                break;
+            case ZERG_ZERGLING:
+            case ZERG_ROACH:
+            case ZERG_HYDRALISK:
+            case ZERG_MUTALISK:
+            case ZERG_ULTRALISK:
+            case ZERG_CORRUPTOR:
+            case ZERG_BROODLORD:
+            case ZERG_RAVAGER:
+            case ZERG_LURKER_MP:
+                allocateSoldier(unit);
+                break;
         }
     }
 
@@ -90,19 +90,54 @@ class Overseer {
                 break;
             case ZERG_SPAWNING_POOL:
                 checkBasesForQueens();
-                mastermind.onBuildingComplete(type);
+                macroManager.onBuildingComplete(type);
                 break;
             case ZERG_EXTRACTOR:
-                allocateExtractor(unit);
+                activateExtractor(unit);
                 break;
+            case ZERG_ROACH_WARREN:
+            default:
+                macroManager.onBuildingComplete(type);
+                break;
+        }
+    }
 
+    private void allocateSoldier(UnitInPool unit) {
+        Base base = getNearestBase(unit);
+        base.allocateUnitToArmy(unit);
+        armyManager.addUnit(unit);
+    }
+    private void activateExtractor(UnitInPool unit) {
+        Base base = getNearestBase(unit);
+        base.transferDronesToExtractor(unit);
+    }
+
+    private void allocateExtractor(UnitInPool unit) {
+        Base base = getNearestBase(unit);
+        base.allocateExtractor(unit);
+    }
+
+    private void allocateQueen(UnitInPool unit) {
+        Base base = getNearestBase(unit);
+        if (base.hasQueen()) {
+            base.allocateUnitToArmy(unit);
+        } else {
+            base.allocateQueen(unit);
+        }
+    }
+
+    private void checkForMain(UnitInPool unit) {
+        if (unit.unit().getBuildProgress() == 1f) {
+            Base main = new Base(agent, utils, unit);
+            bases.put(unit.getTag(), main);
+            setMain(main);
         }
     }
 
     private void checkBasesForQueens() {
         for (Base base : bases.values()) {
             if (!base.hasQueen()) {
-                mastermind.requestQueen(base);
+                macroManager.requestQueen(base);
             }
         }
     }
@@ -169,7 +204,7 @@ class Overseer {
         return getNearestBase(unit.unit().getPosition().toPoint2d());
     }
 
-    private Base getNearestBase(Point2d point) {
+    Base getNearestBase(Point2d point) {
         if (bases.size() == 1) {
             return (Base) bases.values().toArray()[0];
         } else {
