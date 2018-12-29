@@ -20,7 +20,7 @@ import static com.github.ocraft.s2client.protocol.data.Units.*;
 @Log4j2
 public class BuildManager {
 
-    private static final int PLACEMENT_DISANCE = 30;
+    private static final int PLACEMENT_DISTANCE = 30;
     private static final int LOCATION_MINIMUM_DISTANCE = 6;
     private final MacroBot agent;
     private Utils utils;
@@ -95,7 +95,7 @@ public class BuildManager {
         if (gasPositions.size() > extractorPositions.size()) {
             for (Unit position : gasPositions) {
                 if (!extractorPositions.contains(position.getPosition().toPoint2d())) {
-                    return buildBuilding(ZERG_EXTRACTOR, position);
+                    return buildBuilding(ZERG_EXTRACTOR, position, base);
                 }
             }
         }
@@ -139,13 +139,12 @@ public class BuildManager {
             log.info("Not placing hatchery, building " + buildingCounts.get(ZERG_HATCHERY) + " already.");
         } else {
             Point2d location = utils.getNearestExpansionLocationTo(agent.observation().getStartLocation().toPoint2d());
-            Optional<UnitInPool> unitOptional = getNearestFreeDrone(location);
-            if (unitOptional.isEmpty()) {
+            UnitInPool unit = getNearestWorker(location);
+            if (unit == null) {
                 log.info("Insufficient free workers");
             } else if (agent.observation().getMinerals() < 300) {
                 log.info("Insufficient minerals :" + agent.observation().getMinerals());
             } else {
-                UnitInPool unit = unitOptional.get();
                 log.info("Drone " + unit.getTag() + " placing hatchery at :" + location);
                 unitManager.removeDroneFromBase(unit);
                 agent.actions().unitCommand(unit.unit(), Abilities.BUILD_HATCHERY, location, false);
@@ -156,18 +155,23 @@ public class BuildManager {
         return false;
     }
 
-    private Optional<UnitInPool> getNearestFreeDrone(Point2d location) {
-        return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(ZERG_DRONE)).stream()
-                .filter(unit -> unit.unit().getOrders().size() == 1)
-                .filter(unit -> unit.unit().getOrders().get(0).getAbility().equals(Abilities.HARVEST_GATHER))
-                .min(utils.getLinearDistanceComparatorForUnit(location));
+    private UnitInPool getNearestWorker(Point2d location) {
+        Base base = unitManager.getNearestBase(location);
+        return base.getWorker();
+
     }
 
-    private boolean buildBuilding(UnitType unit, Unit target) {
-        List<UnitInPool> drones = utils.getAllUnitsOfType(Units.ZERG_DRONE);
-        if (drones.size() > 0) {
+    private boolean buildBuilding(UnitType unit, Unit target, Base base) {
+        UnitInPool worker;
+        if (base != null) {
+            worker = base.getWorker();
+        } else {
+            List<UnitInPool> drones = utils.getAllUnitsOfType(Units.ZERG_DRONE);
+            worker = drones.get(0);
+        }
+        if (worker != null) {
             buildingCounts.put(unit, 1);
-            agent.actions().unitCommand(drones.get(0).unit(), getAbilityToMakeUnit(unit), target, false);
+            agent.actions().unitCommand(worker.unit(), getAbilityToMakeUnit(unit), target, false);
             return true;
         }
         log.warn("Warning, unable to build building :" + unit);
@@ -175,8 +179,7 @@ public class BuildManager {
     }
 
     private boolean buildBuilding(UnitType unit, Point2d location) {
-        Base base = unitManager.getNearestBase(location);
-        UnitInPool worker = base.getWorker();
+        UnitInPool worker = getNearestWorker(location);
         if (worker != null) {
             buildingCounts.put(unit, 1);
             agent.actions().unitCommand(worker.unit(), getAbilityToMakeUnit(unit), getRandomLocationNearLocationForStructure(unit, location), false);
@@ -187,16 +190,23 @@ public class BuildManager {
     }
 
     private boolean buildUnit(UnitType unit) {
-        List<UnitInPool> larvae = utils.getAllUnitsOfType(Units.ZERG_LARVA);
+        List<UnitInPool> larvae = utils.getAllUnitsOfType(Units.ZERG_LARVA).stream()
+                .filter(larva -> larva.unit().getOrders().size() == 0)
+                .collect(Collectors.toList());
+
         if (larvae.size() > 0) {
-            buildingCounts.put(unit, 1);
+            incrementBuildingCount(unit);
             agent.actions().unitCommand(larvae.get(0).unit(), getAbilityToMakeUnit(unit), false);
             return true;
         }
         return false;
     }
 
-    private Ability getAbilityToMakeUnit(UnitType unitType) {
+    private void incrementBuildingCount(UnitType unit) {
+        buildingCounts.merge(unit, 1, (a, b) -> a + b);
+    }
+
+    Ability getAbilityToMakeUnit(UnitType unitType) {
         return agent.observation().getUnitTypeData(false).get(unitType).getAbility().orElse(Abilities.INVALID);
     }
 
@@ -217,7 +227,7 @@ public class BuildManager {
         }
         if (buildingCounts.containsKey(type)) {
             int number = buildingCounts.get(type);
-            buildingCounts.put(type, number - 1);
+            buildingCounts.put(type, number > 0 ? number - 1 : 0);
         }
 
     }
@@ -228,8 +238,8 @@ public class BuildManager {
         float dx;
         float dy;
         for (int tries = 0; tries < 1000; tries++) {
-            dx = PLACEMENT_DISANCE * (random.nextFloat() - 0.5f);
-            dy = PLACEMENT_DISANCE * (random.nextFloat() - 0.5f);
+            dx = PLACEMENT_DISTANCE * (random.nextFloat() - 0.5f);
+            dy = PLACEMENT_DISTANCE * (random.nextFloat() - 0.5f);
             newLocation = Point2d.of(location.getX() + dx, location.getY() + dy);
             if (location.distance(newLocation) > LOCATION_MINIMUM_DISTANCE) {
                 if (agent.query().placement(ability, newLocation)) {
@@ -241,18 +251,12 @@ public class BuildManager {
         return null;
     }
 
-    public boolean handleRequest(BuildingRequest buildingRequest) {
-        boolean result = true;
-        int done = 0;
-        for (int i = 0; i < buildingRequest.count; i++) {
-            if (build(buildingRequest.type, buildingRequest.base)) {
-                done++;
-            } else {
-                result = false;
-            }
+    public boolean incrementalHandleRequest(BuildingRequest buildingRequest) {
+        if (build(buildingRequest.type, buildingRequest.base)) {
+            buildingRequest.count--;
+            return true;
         }
-        buildingRequest.count -= done;
-        return result;
+        return false;
     }
 
 }

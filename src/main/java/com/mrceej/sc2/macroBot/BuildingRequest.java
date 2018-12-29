@@ -3,11 +3,9 @@ package com.mrceej.sc2.macroBot;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.mrceej.sc2.things.Base;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-@EqualsAndHashCode
 class BuildingRequest {
     final Units type;
     @Getter
@@ -82,22 +80,24 @@ class BuildingRequest {
     public boolean equals(Object other) {
         if (other.getClass() != BuildingRequest.class)
             return false;
-        return this.equals((BuildingRequest)other);
+        return this.equals((BuildingRequest) other);
     }
 
     private boolean equals(BuildingRequest other) {
         return this.type == other.type &&
                 this.count == other.count &&
-                ((this.base == null && other.base == null) ||
-                        (other.base != null &&
-                                this.base != null &&
-                                this.base.equals(other.base)
-                        )) &&
-                ((this.location == null && other.location == null) ||
-                        (other.location != null &&
-                        this.location != null &&
-                        this.location.equals(other.location)
-                )) &&
+                this.base == other.base &&
+                this.location == other.location &&
                 this.unique == other.unique;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (count + 7) * 31;
+        result = 31 * result + (type != null ? type.hashCode() : 5);
+        result = 31 * result + (base != null ? base.hashCode() : 5);
+        result = 31 * result + (location != null ? location.hashCode() : 5);
+        result = 31 * result + (unique ? 2 : 1);
+        return result;
     }
 }

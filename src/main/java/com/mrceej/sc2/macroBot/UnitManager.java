@@ -229,8 +229,13 @@ class UnitManager {
             case ZERG_QUEEN:
                 removeQueenFromBase(unitInPool);
             case ZERG_HATCHERY:
+                removeBase(unitInPool);
                 break;
         }
+    }
+
+    private void removeBase(UnitInPool unitInPool) {
+        bases.remove(unitInPool.getTag());
     }
 
     void removeDroneFromBase(UnitInPool unitInPool) {

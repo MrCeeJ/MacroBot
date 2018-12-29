@@ -21,8 +21,12 @@ class BuildUtils {
 
 
     public boolean checkCanMakeUnit(Units unit, int minerals, int gas) {
-        return haveTechForUnit(unit) && canAffordUnit(unit, minerals, gas);
+        return haveTechForUnit(unit) &&
+                canAffordUnit(unit, minerals, gas) &&
+                haveLarvaeIfNeeded(unit);
     }
+
+
 
     private boolean haveTechForUnit(Units unit) {
         List<Units> requirements = getRequirements(unit);
@@ -38,6 +42,24 @@ class BuildUtils {
     private boolean canAffordUnit(Units unit, int minerals, int gas) {
         return getMineralCost(unit) <= minerals &&
                 getGasCost(unit) <= gas;
+    }
+
+    private boolean haveLarvaeIfNeeded(Units unit) {
+        switch (unit) {
+            case ZERG_ZERGLING:
+            case ZERG_ROACH:
+            case ZERG_HYDRALISK:
+            case ZERG_MUTALISK:
+            case ZERG_OVERLORD:
+            case ZERG_CORRUPTOR:
+            case ZERG_ULTRALISK:
+            case ZERG_INFESTOR:
+            case ZERG_SWARM_HOST_MP:
+            case ZERG_VIPER:
+                return utils.getAllUnitsOfType(ZERG_LARVA).size() > 0;
+            default:
+                return true;
+        }
     }
 
     private List<Units> getRequirements(Units unit) {

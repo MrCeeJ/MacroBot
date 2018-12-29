@@ -35,8 +35,6 @@ public class PureMacro extends Build {
     }
 
     private UnitType getNextBuildItem() {
-
-
         if (checkOverlords() && hasLarvae()) {
             return ZERG_OVERLORD;
         } else if (checkBases()) {
@@ -85,17 +83,18 @@ public class PureMacro extends Build {
     }
 
     private boolean checkOverlords() {
-        if (buildManager.buildingUnit(ZERG_OVERLORD)) {
-            return false;
-        }
+//        if (buildManager.buildingUnit(ZERG_OVERLORD)) {
+//            return false;
+//        }
         int eggs = utils.getAllUnitsOfType(ZERG_LARVA).size();
         int bases = utils.getBases().size();
         int realBuffer = (eggs + bases) * 2;
         int defaultBuffer = supplyUsed / 6;
+        int supplyInProduction = utils.getUnitsInProduction(ZERG_OVERLORD).size() *8;
 
         return (minerals >= 100 &&
                 supplyCap < 200 &&
-                supplyCap < supplyUsed + max(realBuffer,defaultBuffer));
+                supplyCap + supplyInProduction < supplyUsed + max(realBuffer,defaultBuffer));
 
     }
 }

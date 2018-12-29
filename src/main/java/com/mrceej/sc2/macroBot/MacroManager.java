@@ -70,17 +70,14 @@ class MacroManager {
 
     private void checkGassesByBase() {
         for (Base base : bases) {
-            if (base.countMineralWorkers() > 16) {
-                if (base.getExtractors().size() < 2) {
-                    queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
-                }
+            if (base.countMineralWorkers() > 16 &&
+                    base.countGasWorkers() == 3 &&
+                    base.getExtractors().size() < 2) {
+                queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
+            } else if (base.countMineralWorkers() > 14 &&
+                    base.getExtractors().size() < 1) {
+                queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
             }
-            else if (base.countMineralWorkers() > 14) {
-                if (base.getExtractors().size() < 1) {
-                    queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
-                }
-            }
-
         }
     }
 
@@ -125,18 +122,21 @@ class MacroManager {
             for (BuildingRequest request : requests) {
                 if (buildUtils.checkCanMakeUnit(request.type, minerals, gas)) {
                     handled = request;
-                    success = buildManager.handleRequest(handled);
+                    success = buildManager.incrementalHandleRequest(handled);
                     this.minerals -= buildUtils.getMineralCost(request.type);
                     this.gas -= buildUtils.getGasCost(request.type);
                     break;
                 }
             }
             if (handled != null && success) {
-                requests.remove(handled);
-                log.info("Processed request for a :" + handled.type);
-                return true;
+                if (handled.count == 0) {
+                    requests.remove(handled);
+                    log.info("Finished request for :" + handled.type);
+                } else {
+                    log.info("Processed request for a :" + handled.type + ", " + handled.count + " more to go!");
+                }
             }
-            return false;
+            return true;
         }
     }
 
@@ -149,6 +149,7 @@ class MacroManager {
     private void queueRequest(BuildingRequest request) {
         if (!requests.contains(request)) {
             if (request.isUnique() && buildManager.buildingUnit(request.type)) {
+                log.info("Already building a :" + request.type);
             } else {
                 if (request.type == ZERG_LAIR || request.type == ZERG_HIVE) {
                     request.setBase(unitManager.getMain());

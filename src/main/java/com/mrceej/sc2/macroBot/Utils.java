@@ -5,20 +5,22 @@ import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
-import com.mrceej.sc2.CeejBot;
 import com.mrceej.sc2.things.Base;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 public class Utils {
 
-    private final CeejBot agent;
+    private final MacroBot agent;
+    private BuildManager buildManager;
 
-    public Utils(CeejBot agent) {
+    public Utils(MacroBot agent) {
         this.agent = agent;
+        this.buildManager = agent.getBuildManager();
     }
 
     public List<UnitInPool> getDrones() {
@@ -79,5 +81,12 @@ public class Utils {
             }
         }
         return target;
+    }
+
+    public List<UnitInPool> getUnitsInProduction(Units unit) {
+        return agent.observation().getUnits(Alliance.SELF, (unitInPool -> unitInPool.unit().getType().equals(ZERG_EGG))).stream()
+                .filter(egg -> egg.unit().getOrders().stream().anyMatch(order -> order.getAbility().equals(buildManager.getAbilityToMakeUnit(unit))))
+                .collect(Collectors.toList());
+
     }
 }
