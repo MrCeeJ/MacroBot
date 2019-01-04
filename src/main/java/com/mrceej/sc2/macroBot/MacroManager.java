@@ -113,32 +113,7 @@ class MacroManager {
         }
     }
 
-    private boolean handleRequests() {
-        if (requests.size() == 0) {
-            return false;
-        } else {
-            BuildingRequest handled = null;
-            boolean success = false;
-            for (BuildingRequest request : requests) {
-                if (buildUtils.checkCanMakeUnit(request.type, minerals, gas)) {
-                    handled = request;
-                    success = buildManager.incrementalHandleRequest(handled);
-                    this.minerals -= buildUtils.getMineralCost(request.type);
-                    this.gas -= buildUtils.getGasCost(request.type);
-                    break;
-                }
-            }
-            if (handled != null && success) {
-                if (handled.count == 0) {
-                    requests.remove(handled);
-                    log.info("Finished request for :" + handled.type);
-                } else {
-                    log.info("Processed request for a :" + handled.type + ", " + handled.count + " more to go!");
-                }
-            }
-            return true;
-        }
-    }
+
 
     void requestQueen(Base base) {
         if (buildUtils.checkCanMakeUnit(ZERG_QUEEN, minerals, gas)) {
@@ -165,12 +140,39 @@ class MacroManager {
     void onBuildingComplete(Units type) {
         switch (type) {
             case ZERG_SPAWNING_POOL:
-                queueRequest(new BuildingRequest(ZERG_ZERGLING, 2, false));
+                queueRequest(new BuildingRequest(ZERG_ZERGLING, 6, false));
                 break;
             case ZERG_ROACH_WARREN:
                 queueRequest(new BuildingRequest(ZERG_ROACH, 8, false));
                 break;
             default:
+        }
+    }
+
+    private boolean handleRequests() {
+        if (requests.size() == 0) {
+            return false;
+        } else {
+            BuildingRequest handled = null;
+            boolean success = false;
+            for (BuildingRequest request : requests) {
+                if (buildUtils.checkCanMakeUnit(request.type, minerals, gas)) {
+                    handled = request;
+                    success = buildManager.incrementalHandleRequest(handled);
+                    this.minerals -= buildUtils.getMineralCost(request.type);
+                    this.gas -= buildUtils.getGasCost(request.type);
+                    break;
+                }
+            }
+            if (handled != null && success) {
+                if (handled.count == 0) {
+                    requests.remove(handled);
+                    log.info("Finished request for :" + handled.type + " requests queue is now " + (requests.size() == 0 ? "empty" : requests.size() + " item(s)"));
+                } else {
+                    log.info("Processed request for a :" + handled.type + ", " + handled.count + " more to go!");
+                }
+            }
+            return success;
         }
     }
 }

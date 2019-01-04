@@ -23,7 +23,7 @@ public class Base {
     private final CeejBot agent;
     private final Utils utils;
     private final ArrayList<Object> gasWorkers;
-    private final Army army;
+    private final Army baseDefenseArmy;
     @Getter
     private UnitInPool base;
     @Getter
@@ -48,7 +48,7 @@ public class Base {
         this.mineralWorkers = new ArrayList<>();
         this.gasWorkers = new ArrayList<>();
         this.queens = new ArrayList<>();
-        this.army = new Army();
+        this.baseDefenseArmy = new Army();
         agent.actions().unitCommand(base.unit(), Abilities.RALLY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit(), false);
     }
 
@@ -142,6 +142,6 @@ public class Base {
         this.extractors.add(extractor);
        }
        public void allocateUnitToArmy(UnitInPool unit) {
-        this.army.add(unit);
+        this.baseDefenseArmy.add(unit);
        }
 }

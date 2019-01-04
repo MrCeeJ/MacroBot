@@ -25,6 +25,8 @@ public class MacroBot extends CeejBot {
     private final BuildManager buildManager;
     @Getter
     private final BuildUtils buildUtils;
+    @Getter
+    private final ArmyManager armyManager;
 
     public MacroBot(PlayerSettings opponent) {
         super(opponent, Race.ZERG);
@@ -34,6 +36,7 @@ public class MacroBot extends CeejBot {
         this.buildManager = new BuildManager(this);
         this.macroManager = new MacroManager(this);
         this.buildUtils = new BuildUtils(this);
+        this.armyManager = new ArmyManager(this);
     }
 
     private void init() {
@@ -41,11 +44,13 @@ public class MacroBot extends CeejBot {
         unitManager.init();
         buildManager.init();
         buildUtils.init();
+        armyManager.init();
     }
 
     private void runAI() {
         macroManager.update();
         unitManager.update();
+        armyManager.update();
     }
 
     @Override

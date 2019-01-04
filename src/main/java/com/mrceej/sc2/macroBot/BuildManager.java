@@ -28,6 +28,7 @@ public class BuildManager {
     private Map<UnitType, Integer> buildingCounts;
     private final Random random = new Random();
     private List<Tag> workerTags;
+    private BuildUtils buildUtils;
 
     public BuildManager(MacroBot agent) {
         this.agent = agent;
@@ -38,6 +39,7 @@ public class BuildManager {
         this.unitManager = agent.getUnitManager();
         this.buildingCounts = new HashMap<>();
         this.workerTags = new ArrayList<>();
+        this.buildUtils = agent.getBuildUtils();
 
     }
 
@@ -190,6 +192,10 @@ public class BuildManager {
     }
 
     private boolean buildUnit(UnitType unit) {
+        if (!buildUtils.canBuildUnit(unit)) {
+            return false;
+        }
+
         List<UnitInPool> larvae = utils.getAllUnitsOfType(Units.ZERG_LARVA).stream()
                 .filter(larva -> larva.unit().getOrders().size() == 0)
                 .collect(Collectors.toList());

@@ -1,5 +1,6 @@
 package com.mrceej.sc2.macroBot;
 
+import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 
 import java.util.List;
@@ -19,14 +20,22 @@ class BuildUtils {
         this.utils = agent.getUtils();
     }
 
-
     public boolean checkCanMakeUnit(Units unit, int minerals, int gas) {
         return haveTechForUnit(unit) &&
                 canAffordUnit(unit, minerals, gas) &&
                 haveLarvaeIfNeeded(unit);
     }
 
+    boolean canBuildUnit(UnitType unit) {
+        return haveSupplyForUnit(unit) && checkCanMakeUnit((Units) unit, agent.observation().getMinerals(), agent.observation().getVespene());
+    }
 
+    private boolean haveSupplyForUnit(UnitType unit) {
+        float supplyCost = agent.observation().getUnitTypeData(false).get(unit).getFoodRequired().orElse(0f);
+        int supplyUsed = agent.observation().getFoodUsed();
+        int supplyCap = agent.observation().getFoodCap();
+        return supplyCap - supplyUsed > supplyCost;
+    }
 
     private boolean haveTechForUnit(Units unit) {
         List<Units> requirements = getRequirements(unit);
@@ -37,7 +46,6 @@ class BuildUtils {
         }
         return true;
     }
-
 
     private boolean canAffordUnit(Units unit, int minerals, int gas) {
         return getMineralCost(unit) <= minerals &&

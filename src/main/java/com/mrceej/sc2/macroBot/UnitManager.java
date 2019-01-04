@@ -33,9 +33,8 @@ class UnitManager {
     public void init() {
         this.utils = agent.getUtils();
         this.macroManager = agent.getMacroManager();
+        this.armyManager = agent.getArmyManager();
         this.bases = new HashMap<>();
-        this.armyManager = new ArmyManager();
-
     }
 
     void update() {
@@ -107,6 +106,7 @@ class UnitManager {
         base.allocateUnitToArmy(unit);
         armyManager.addUnit(unit);
     }
+
     private void activateExtractor(UnitInPool unit) {
         Base base = getNearestBase(unit);
         base.transferDronesToExtractor(unit);
@@ -231,6 +231,8 @@ class UnitManager {
             case ZERG_HATCHERY:
                 removeBase(unitInPool);
                 break;
+            default:
+                armyManager.onUnitDestroyed(unitInPool);
         }
     }
 
