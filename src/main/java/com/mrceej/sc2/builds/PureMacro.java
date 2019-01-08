@@ -38,7 +38,6 @@ public class PureMacro extends Build {
         if (checkOverlords() && hasLarvae()) {
             return ZERG_OVERLORD;
         } else if (checkBases()) {
-            log.info("Need a Hatchery STAT!");
             return Units.ZERG_HATCHERY;
         } else if (checkDrones() && hasLarvae()) {
             return Units.ZERG_DRONE;

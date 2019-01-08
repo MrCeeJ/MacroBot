@@ -68,7 +68,7 @@ public class ScoutArmy extends Army {
             scouts.remove(deadScout);
             Point2d oldAllocation = null;
             for (Point2d point : allocations.keySet()) {
-                if (allocations.get(point).equals(deadScout))
+                if (allocations.get(point)!= null && allocations.get(point).equals(deadScout))
                 {
                     oldAllocation = point;
                     break;

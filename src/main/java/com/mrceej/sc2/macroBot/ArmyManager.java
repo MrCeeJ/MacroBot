@@ -4,9 +4,7 @@ import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
-import com.mrceej.sc2.things.Army;
-import com.mrceej.sc2.things.Scout;
-import com.mrceej.sc2.things.ScoutArmy;
+import com.mrceej.sc2.things.*;
 
 import java.util.List;
 import java.util.Set;
@@ -15,6 +13,7 @@ public class ArmyManager {
 
 
     private final Utils utils;
+    private final QueenArmy queens;
     private MacroBot agent;
     private ScoutArmy groundScouts;
     private List<UnitInPool> towers;
@@ -23,12 +22,14 @@ public class ArmyManager {
 
     ArmyManager(MacroBot agent) {
         this.agent = agent;
-        this.currentArmy = new Army();
+        this.mainArmy = new Army();
         this.utils = agent.getUtils();
+
         this.groundScouts = new ScoutArmy();
+        this.queens = new QueenArmy();
     }
 
-    private Army currentArmy;
+    private Army mainArmy;
 
     public void init() {
         this.towers = agent.observation().getUnits(Alliance.NEUTRAL, unitInPool -> unitInPool.unit().getType().equals(Units.NEUTRAL_XELNAGA_TOWER));
@@ -51,7 +52,8 @@ public class ArmyManager {
             else {
                 allocateArmy(unit);
             }
-
+            case ZERG_QUEEN:
+                allocateQueen(unit);
         case ZERG_ROACH:
         case ZERG_HYDRALISK:
         case ZERG_MUTALISK:
@@ -66,7 +68,11 @@ public class ArmyManager {
         // handle requests
         // allocate unit
 
-        this.currentArmy.add(unit);
+        this.mainArmy.add(unit);
+    }
+
+    private void allocateQueen(UnitInPool unit) {
+        this.queens.add(new Queen(agent, unit));
     }
 
     private void allocateGroundScout(UnitInPool unit) {

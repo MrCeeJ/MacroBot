@@ -120,7 +120,7 @@ class UnitManager {
     private void allocateQueen(UnitInPool unit) {
         Base base = getNearestBase(unit);
         if (base.hasQueen()) {
-            base.allocateUnitToArmy(unit);
+           armyManager.addUnit(unit);
         } else {
             base.allocateQueen(unit);
         }
