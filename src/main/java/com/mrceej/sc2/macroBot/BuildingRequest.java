@@ -6,7 +6,7 @@ import com.mrceej.sc2.things.Base;
 import lombok.Getter;
 import lombok.Setter;
 
-class BuildingRequest {
+public class BuildingRequest {
     final Units type;
     @Getter
     private boolean unique;

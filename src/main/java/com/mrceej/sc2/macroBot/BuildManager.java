@@ -132,7 +132,7 @@ public class BuildManager {
         return true;
     }
 
-    public boolean buildingUnit(Units unit) {
+    boolean buildingUnit(Units unit) {
         return (buildingCounts.containsKey(unit) && buildingCounts.get(unit) > 0);
     }
 
@@ -158,7 +158,7 @@ public class BuildManager {
     }
 
     private UnitInPool getNearestWorker(Point2d location) {
-        Base base = unitManager.getNearestBase(location);
+        Base base = unitManager.getNearestBaseWithWorkers(location);
         return base.getWorker();
 
     }
@@ -257,7 +257,7 @@ public class BuildManager {
         return null;
     }
 
-    public boolean incrementalHandleRequest(BuildingRequest buildingRequest) {
+    boolean incrementalHandleRequest(BuildingRequest buildingRequest) {
         if (build(buildingRequest.type, buildingRequest.base)) {
             buildingRequest.count--;
             return true;

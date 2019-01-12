@@ -82,9 +82,6 @@ public class PureMacro extends Build {
     }
 
     private boolean checkOverlords() {
-//        if (buildManager.buildingUnit(ZERG_OVERLORD)) {
-//            return false;
-//        }
         int eggs = utils.getAllUnitsOfType(ZERG_LARVA).size();
         int bases = utils.getBases().size();
         int realBuffer = (eggs + bases) * 2;

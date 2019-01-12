@@ -6,6 +6,7 @@ import com.mrceej.sc2.builds.BuildOrderEntry;
 import com.mrceej.sc2.builds.Plan;
 import com.mrceej.sc2.builds.PureMacro;
 import com.mrceej.sc2.things.Base;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Collection;
@@ -15,9 +16,10 @@ import java.util.List;
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
+public
 class MacroManager {
     private BuildManager buildManager;
-    private Build currentBuild;
+    private Build defaultBuild;
     private Utils utils;
     private final MacroBot agent;
     private LinkedList<BuildingRequest> requests;
@@ -29,7 +31,10 @@ class MacroManager {
     private int droneCount;
     private Collection<Base> bases;
     private UnitManager unitManager;
+    @Getter
     private int workers;
+    private Adviser adviser;
+    private Plan plan;
 
 
     public MacroManager(MacroBot agent) {
@@ -37,37 +42,38 @@ class MacroManager {
     }
 
     public void init() {
-        this.currentBuild = new PureMacro(agent);
+        this.defaultBuild = new PureMacro(agent);
         this.utils = agent.getUtils();
         this.buildManager = agent.getBuildManager();
         this.requests = new LinkedList<>();
         this.buildUtils = agent.getBuildUtils();
         this.unitManager = agent.getUnitManager();
+        this.adviser = agent.getAdviser();
+        this.plan = adviser.getCurrentPlan();
     }
 
     public void update() {
         updateData();
+        plan.update(this);
+        // move to plans
         checkGassesByBase();
         checkTechRequests();
-        checkUnitRequests();
         updateBuilds();
     }
 
-    private void updateData() {
-        this.minerals = agent.observation().getMinerals();
-        this.gas = agent.observation().getVespene();
-        this.supplyUsed = agent.observation().getFoodUsed();
-        this.supplyCap = agent.observation().getFoodCap();
-        this.droneCount = utils.getDrones().size();
-        this.bases = unitManager.getBases().values();
-        this.workers = utils.getAllUnitsOfType(Units.ZERG_DRONE).size();
-
-    }
 
     private void checkUnitRequests() {
 
     }
 
+    private void checkTechRequests() {
+        List<BuildOrderEntry> build = plan.getBuildRequests(this);
+        for (BuildOrderEntry entry : build) {
+            if (utils.getAllUnitsOfType(entry.getUnit()).size() == 0) {
+                queueRequest(new BuildingRequest(entry.getUnit(), entry.isUnique()));
+            }
+        }
+    }
     private void checkGassesByBase() {
         for (Base base : bases) {
             if (base.countMineralWorkers() > 16 &&
@@ -98,18 +104,31 @@ class MacroManager {
         }
     }
 
-    private void checkTechRequests() {
-        List<BuildOrderEntry> build = Plan.getCurrentState(workers);
-        for (BuildOrderEntry entry : build) {
-            if (utils.getAllUnitsOfType(entry.getUnit()).size() == 0) {
-                queueRequest(new BuildingRequest(entry.getUnit(), entry.isUnique()));
-            }
-        }
+
+    void onBuildingComplete(Units type) {
+        plan.onBuildingComplete(type);
     }
+
+    void onUnitComplete(Units type) {
+        plan.onUnitComplete(type);
+    }
+
+    private void updateData() {
+        this.minerals = agent.observation().getMinerals();
+        this.gas = agent.observation().getVespene();
+        this.supplyUsed = agent.observation().getFoodUsed();
+        this.supplyCap = agent.observation().getFoodCap();
+        this.droneCount = utils.getDrones().size();
+        this.bases = unitManager.getBases().values();
+        this.workers = utils.getAllUnitsOfType(Units.ZERG_DRONE).size();
+        this.plan = adviser.getCurrentPlan();
+
+    }
+
 
     private void updateBuilds() {
         if (!handleRequests()) {
-            currentBuild.build();
+            defaultBuild.build();
         }
     }
 
@@ -121,7 +140,7 @@ class MacroManager {
         }
     }
 
-    private void queueRequest(BuildingRequest request) {
+    public void queueRequest(BuildingRequest request) {
         if (!requests.contains(request)) {
             if (request.isUnique() && buildManager.buildingUnit(request.type)) {
                 log.info("Already building a :" + request.type);
@@ -137,17 +156,6 @@ class MacroManager {
         }
     }
 
-    void onBuildingComplete(Units type) {
-        switch (type) {
-            case ZERG_SPAWNING_POOL:
-                queueRequest(new BuildingRequest(ZERG_ZERGLING, 6, false));
-                break;
-            case ZERG_ROACH_WARREN:
-                queueRequest(new BuildingRequest(ZERG_ROACH, 8, false));
-                break;
-            default:
-        }
-    }
 
     private boolean handleRequests() {
         if (requests.size() == 0) {
@@ -175,4 +183,6 @@ class MacroManager {
             return success;
         }
     }
+
+
 }

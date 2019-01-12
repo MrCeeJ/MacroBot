@@ -22,7 +22,7 @@ import java.util.Random;
 public class Base {
     private final CeejBot agent;
     private final Utils utils;
-    private final ArrayList<Object> gasWorkers;
+
     private final Army baseDefenseArmy;
     @Getter
     private UnitInPool base;
@@ -33,7 +33,10 @@ public class Base {
     private final List<UnitInPool> gases;
     @Getter
     private final List<UnitInPool> extractors;
-    private final List<UnitInPool> mineralWorkers;
+    @Getter
+    private final ArrayList<UnitInPool> mineralWorkers;
+    @Getter
+    private final ArrayList<UnitInPool> gasWorkers;
     private final List<UnitInPool> queens;
     private final Random random = new Random();
 
@@ -55,7 +58,7 @@ public class Base {
     public void update() {
         if (hasQueen() && needsInject()) {
             for (UnitInPool queen : queens) {
-                if (queen.unit().getEnergy().orElse(0f) >= 25) {
+                if (queen.unit().getEnergy().orElse(0f) >= 25f) {
                     agent.actions().unitCommand(queen.unit(), Abilities.EFFECT_INJECT_LARVA, this.base.unit(), false);
                     break;
                 }
@@ -92,12 +95,13 @@ public class Base {
     }
 
     public UnitInPool getWorker() {
-        UnitInPool worker;
+        UnitInPool worker = null;
         if (mineralWorkers.size() > 0) {
             worker = mineralWorkers.remove(0);
-            return worker;
+        } else if (gasWorkers.size() > 0) {
+            worker = gasWorkers.remove(0);
         }
-        return null;
+        return worker;
     }
 
     public int countGasWorkers() {
@@ -140,8 +144,9 @@ public class Base {
 
     public void allocateExtractor(UnitInPool extractor) {
         this.extractors.add(extractor);
-       }
-       public void allocateUnitToArmy(UnitInPool unit) {
+    }
+
+    public void allocateUnitToArmy(UnitInPool unit) {
         this.baseDefenseArmy.add(unit);
-       }
+    }
 }

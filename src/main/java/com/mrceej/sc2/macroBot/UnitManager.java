@@ -51,7 +51,7 @@ class UnitManager {
                 checkForMain(unit);
                 break;
             case ZERG_DRONE:
-                getNearestBase(unit).allocateWorker(unit);
+                allocateDrone(unit, getNearestBase(unit));
                 break;
             case ZERG_QUEEN:
                 allocateQueen(unit);
@@ -71,6 +71,12 @@ class UnitManager {
                 allocateSoldier(unit);
                 break;
         }
+        macroManager.onUnitComplete(type);
+
+    }
+
+    private void allocateDrone(UnitInPool unit, Base base) {
+        base.allocateWorker(unit);
     }
 
     void onBuildingComplete(UnitInPool unit) {
@@ -89,16 +95,14 @@ class UnitManager {
                 break;
             case ZERG_SPAWNING_POOL:
                 checkBasesForQueens();
-                macroManager.onBuildingComplete(type);
                 break;
             case ZERG_EXTRACTOR:
                 activateExtractor(unit);
                 break;
             case ZERG_ROACH_WARREN:
             default:
-                macroManager.onBuildingComplete(type);
-                break;
         }
+        macroManager.onBuildingComplete(type);
     }
 
     private void allocateSoldier(UnitInPool unit) {
@@ -120,7 +124,7 @@ class UnitManager {
     private void allocateQueen(UnitInPool unit) {
         Base base = getNearestBase(unit);
         if (base.hasQueen()) {
-           armyManager.addUnit(unit);
+            armyManager.addUnit(unit);
         } else {
             base.allocateQueen(unit);
         }
@@ -153,7 +157,7 @@ class UnitManager {
         }
         int workers = agent.observation().getFoodWorkers();
         int average = workers / bases.size();
-
+        updateWorkers();
         List<SimpleEntry<Base, Integer>> basesOver = new ArrayList<>();
         List<SimpleEntry<Base, Integer>> basesUnder = new ArrayList<>();
 
@@ -162,7 +166,7 @@ class UnitManager {
             if (assignedWorkers > average) {
                 basesOver.add(new SimpleEntry<>(base, assignedWorkers - average));
                 log.info("Base : " + base.getTag().toString() + " Assigned too many workers :" + assignedWorkers + " - average :" + average);
-            } else if (base.countMineralWorkers() < average) {
+            } else if (base.countMineralWorkers() <= average) {
                 basesUnder.add(new SimpleEntry<>(base, average - assignedWorkers));
                 log.info("Base : " + base.getTag().toString() + " Assigned too few workers :" + assignedWorkers + " - average :" + average);
             } else {
@@ -180,9 +184,11 @@ class UnitManager {
                     Base underBase = underEntry.getKey();
                     if (over >= under) {
                         moveDrones(under, overBase, underBase);
+                        underEntry.setValue(0);
                         over -= under;
                     } else {
                         moveDrones(over, overBase, underBase);
+                        underEntry.setValue(under - over);
                         break;
                     }
                     if (over == 0) {
@@ -193,15 +199,37 @@ class UnitManager {
         }
     }
 
+    private void updateWorkers() {
+        List<UnitInPool> workers = utils.getAllUnitsOfType(Units.ZERG_DRONE);
+        List<UnitInPool> assignedWorkers = new ArrayList<>();
+        for (Base base : bases.values()) {
+            assignedWorkers.addAll(base.getMineralWorkers());
+            assignedWorkers.addAll(base.getGasWorkers());
+        }
+        workers.stream()
+                .filter(unit -> !assignedWorkers.contains(unit))
+                .forEach(unit -> allocateDrone(unit, getNearestBase(unit)));
+    }
+
     private void moveDrones(int number, Base overBase, Base underBase) {
         log.info("Moving  : " + number + " drones from base:" + overBase.getTag() + " to :" + underBase.getTag());
         for (int i = 0; i < number; i++) {
-            underBase.allocateWorker(overBase.getWorker());
+            allocateDrone(overBase.getWorker(), underBase);
         }
     }
 
     private Base getNearestBase(UnitInPool unit) {
         return getNearestBase(unit.unit().getPosition().toPoint2d());
+    }
+
+    Base getNearestBaseWithWorkers(Point2d point) {
+        if (bases.size() == 1) {
+            return (Base) bases.values().toArray()[0];
+        } else {
+            return bases.values().stream()
+                    .filter(base -> base.countMineralWorkers() > 0 || base.countGasWorkers() > 0)
+                    .min(utils.getLinearDistanceComparatorForBase(point)).orElse(null);
+        }
     }
 
     Base getNearestBase(Point2d point) {
