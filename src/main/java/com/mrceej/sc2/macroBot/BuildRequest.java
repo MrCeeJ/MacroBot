@@ -6,7 +6,7 @@ import com.mrceej.sc2.things.Base;
 import lombok.Getter;
 import lombok.Setter;
 
-public class BuildingRequest {
+public class BuildRequest {
     final Units type;
     @Getter
     private boolean unique;
@@ -15,7 +15,7 @@ public class BuildingRequest {
     Base base;
     final Point2d location;
 
-    public BuildingRequest(Units type) {
+    public BuildRequest(Units type) {
         this.type = type;
         this.count = 1;
         this.base = null;
@@ -24,7 +24,7 @@ public class BuildingRequest {
 
     }
 
-    public BuildingRequest(Units type, int count) {
+    public BuildRequest(Units type, int count) {
         this.type = type;
         this.count = count;
         this.base = null;
@@ -33,7 +33,7 @@ public class BuildingRequest {
 
     }
 
-    public BuildingRequest(Units type, Base base) {
+    public BuildRequest(Units type, Base base) {
         this.type = type;
         this.count = 1;
         this.base = base;
@@ -42,7 +42,7 @@ public class BuildingRequest {
 
     }
 
-    public BuildingRequest(Units type, Base base, boolean unique) {
+    public BuildRequest(Units type, Base base, boolean unique) {
         this.type = type;
         this.base = base;
         this.unique = unique;
@@ -51,7 +51,7 @@ public class BuildingRequest {
 
     }
 
-    public BuildingRequest(Units type, Point2d location) {
+    public BuildRequest(Units type, Point2d location) {
         this.type = type;
         this.count = 1;
         this.base = null;
@@ -60,7 +60,7 @@ public class BuildingRequest {
 
     }
 
-    public BuildingRequest(Units type, int i, boolean unique) {
+    public BuildRequest(Units type, int i, boolean unique) {
         this.type = type;
         this.count = i;
         this.base = null;
@@ -68,7 +68,7 @@ public class BuildingRequest {
         this.unique = unique;
     }
 
-    public BuildingRequest(Units type, boolean unique) {
+    public BuildRequest(Units type, boolean unique) {
         this.type = type;
         this.count = 1;
         this.base = null;
@@ -78,12 +78,12 @@ public class BuildingRequest {
 
     @Override
     public boolean equals(Object other) {
-        if (other.getClass() != BuildingRequest.class)
+        if (other.getClass() != BuildRequest.class)
             return false;
-        return this.equals((BuildingRequest) other);
+        return this.equals((BuildRequest) other);
     }
 
-    private boolean equals(BuildingRequest other) {
+    private boolean equals(BuildRequest other) {
         return this.type == other.type &&
                 this.count == other.count &&
                 this.base == other.base &&

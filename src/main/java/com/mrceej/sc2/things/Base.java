@@ -7,7 +7,7 @@ import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.github.ocraft.s2client.protocol.unit.Tag;
 import com.github.ocraft.s2client.protocol.unit.Unit;
-import com.mrceej.sc2.CeejBot;
+import com.mrceej.sc2.macroBot.MacroBot;
 import com.mrceej.sc2.macroBot.Utils;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,7 +20,7 @@ import java.util.Random;
 @Log4j2
 @EqualsAndHashCode
 public class Base {
-    private final CeejBot agent;
+    private final MacroBot agent;
     private final Utils utils;
 
     private final Army baseDefenseArmy;
@@ -40,7 +40,7 @@ public class Base {
     private final List<UnitInPool> queens;
     private final Random random = new Random();
 
-    public Base(CeejBot agent, Utils utils, UnitInPool base) {
+    public Base(MacroBot agent, Utils utils, UnitInPool base) {
         this.agent = agent;
         this.utils = utils;
         this.base = base;
@@ -51,7 +51,7 @@ public class Base {
         this.mineralWorkers = new ArrayList<>();
         this.gasWorkers = new ArrayList<>();
         this.queens = new ArrayList<>();
-        this.baseDefenseArmy = new Army();
+        this.baseDefenseArmy = new Army(agent);
         agent.actions().unitCommand(base.unit(), Abilities.RALLY_WORKERS, utils.findNearestMineralPatch(base.unit().getPosition().toPoint2d()).unit(), false);
     }
 

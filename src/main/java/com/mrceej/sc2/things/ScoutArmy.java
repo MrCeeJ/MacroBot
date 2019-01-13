@@ -3,6 +3,7 @@ package com.mrceej.sc2.things;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Tag;
+import com.mrceej.sc2.macroBot.MacroBot;
 import lombok.EqualsAndHashCode;
 import lombok.extern.log4j.Log4j2;
 
@@ -25,7 +26,8 @@ public class ScoutArmy extends Army {
         }
     }
 
-    public ScoutArmy() {
+    public ScoutArmy(MacroBot agent) {
+        super(agent);
         this.allocations = new HashMap<>();
         this.scouts = new ArrayList<>();
     }

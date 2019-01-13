@@ -11,25 +11,23 @@ import java.util.Set;
 
 public class ArmyManager {
 
-
     private final Utils utils;
     private final QueenArmy queens;
-    private MacroBot agent;
+    private Army mainArmy;
     private ScoutArmy groundScouts;
+    private MacroBot agent;
     private List<UnitInPool> towers;
     private Set<Point2d> enemyBases;
     private Set<Point2d> enemyNaturals;
 
     ArmyManager(MacroBot agent) {
         this.agent = agent;
-        this.mainArmy = new Army();
+        this.mainArmy = new Army(agent);
         this.utils = agent.getUtils();
-
-        this.groundScouts = new ScoutArmy();
-        this.queens = new QueenArmy();
+        this.groundScouts = new ScoutArmy(agent);
+        this.queens = new QueenArmy(agent);
     }
 
-    private Army mainArmy;
 
     public void init() {
         this.towers = agent.observation().getUnits(Alliance.NEUTRAL, unitInPool -> unitInPool.unit().getType().equals(Units.NEUTRAL_XELNAGA_TOWER));
@@ -40,30 +38,34 @@ public class ArmyManager {
 
     public void update() {
         this.groundScouts.update();
+        this.mainArmy.update();
     }
 
     void addUnit(UnitInPool unit) {
         Units type = (Units) unit.unit().getType();
         switch (type) {
-        case ZERG_ZERGLING:
-            if (needsGroundScout()){
-                allocateGroundScout(unit);
-            }
-            else {
-                allocateArmy(unit);
-            }
+            case ZERG_ZERGLING:
+                if (needsGroundScout()) {
+                    allocateGroundScout(unit);
+                } else {
+                    allocateArmy(unit);
+                }
+                break;
             case ZERG_QUEEN:
                 allocateQueen(unit);
-        case ZERG_ROACH:
-        case ZERG_HYDRALISK:
-        case ZERG_MUTALISK:
-        case ZERG_ULTRALISK:
-        case ZERG_CORRUPTOR:
-        case ZERG_BROODLORD:
-        case ZERG_RAVAGER:
-        case ZERG_LURKER_MP:
-        break;
-    }
+                break;
+            case ZERG_ROACH:
+            case ZERG_HYDRALISK:
+            case ZERG_MUTALISK:
+            case ZERG_ULTRALISK:
+            case ZERG_CORRUPTOR:
+            case ZERG_BROODLORD:
+            case ZERG_RAVAGER:
+            case ZERG_LURKER_MP:
+            default:
+                allocateArmy(unit);
+                break;
+        }
         // check which army needed it
         // handle requests
         // allocate unit

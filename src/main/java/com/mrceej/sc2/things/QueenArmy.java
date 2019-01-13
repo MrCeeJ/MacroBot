@@ -1,5 +1,6 @@
 package com.mrceej.sc2.things;
 
+import com.mrceej.sc2.macroBot.MacroBot;
 import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
@@ -10,7 +11,8 @@ public class QueenArmy extends Army {
 
     List<Queen> queens;
 
-    public QueenArmy() {
+    public QueenArmy(MacroBot agent) {
+        super(agent);
         this.queens = new ArrayList<>();
     }
 

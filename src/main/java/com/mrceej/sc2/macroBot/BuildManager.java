@@ -257,9 +257,9 @@ public class BuildManager {
         return null;
     }
 
-    boolean incrementalHandleRequest(BuildingRequest buildingRequest) {
-        if (build(buildingRequest.type, buildingRequest.base)) {
-            buildingRequest.count--;
+    boolean incrementalHandleRequest(BuildRequest buildRequest) {
+        if (build(buildRequest.type, buildRequest.base)) {
+            buildRequest.count--;
             return true;
         }
         return false;

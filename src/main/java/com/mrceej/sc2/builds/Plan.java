@@ -1,6 +1,7 @@
 package com.mrceej.sc2.builds;
 
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.macroBot.MacroBot;
 import com.mrceej.sc2.macroBot.MacroManager;
 
 import java.util.ArrayList;
@@ -11,8 +12,10 @@ import static com.github.ocraft.s2client.protocol.data.Units.*;
 public abstract class Plan {
 
     List<BuildOrderEntry> buildMilestones;
+    MacroBot agent;
 
-    Plan() {
+    Plan(MacroBot agent) {
+        this.agent = agent;
         buildMilestones = List.of(
                 new BuildOrderEntry(14, ZERG_SPAWNING_POOL, true),
                 new BuildOrderEntry(20, ZERG_ROACH_WARREN, true),
@@ -38,4 +41,7 @@ public abstract class Plan {
     public abstract void update(MacroManager manager);
 
 
+    public abstract boolean shouldAttack();
+
+    public abstract boolean shouldRetreat();
 }

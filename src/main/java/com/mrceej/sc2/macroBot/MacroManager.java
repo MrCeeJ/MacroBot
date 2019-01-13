@@ -22,7 +22,7 @@ class MacroManager {
     private Build defaultBuild;
     private Utils utils;
     private final MacroBot agent;
-    private LinkedList<BuildingRequest> requests;
+    private LinkedList<BuildRequest> requests;
     private BuildUtils buildUtils;
     private int minerals;
     private int gas;
@@ -57,7 +57,7 @@ class MacroManager {
         plan.update(this);
         // move to plans
         checkGassesByBase();
-        checkTechRequests();
+        queuePlanRequests();
         updateBuilds();
     }
 
@@ -66,23 +66,28 @@ class MacroManager {
 
     }
 
-    private void checkTechRequests() {
+    private void queuePlanRequests() {
         List<BuildOrderEntry> build = plan.getBuildRequests(this);
         for (BuildOrderEntry entry : build) {
-            if (utils.getAllUnitsOfType(entry.getUnit()).size() == 0) {
-                queueRequest(new BuildingRequest(entry.getUnit(), entry.isUnique()));
+            if (entry.isUnit) {
+                // TODO: Double check this test, why not queue them all?
+                if (utils.getAllUnitsOfType(entry.getUnit()).size() == 0) {
+                    queueRequest(new BuildRequest(entry.getUnit(), entry.isUnique()));
+                }
             }
+
         }
     }
     private void checkGassesByBase() {
         for (Base base : bases) {
             if (base.countMineralWorkers() > 16 &&
                     base.countGasWorkers() == 3 &&
-                    base.getExtractors().size() < 2) {
-                queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
+                    base.getExtractors().size() < 2 &&
+                    !buildManager.buildingUnit(ZERG_EXTRACTOR)) {
+                queueRequest(new BuildRequest(ZERG_EXTRACTOR, base, false));
             } else if (base.countMineralWorkers() > 14 &&
                     base.getExtractors().size() < 1) {
-                queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
+                queueRequest(new BuildRequest(ZERG_EXTRACTOR, base, false));
             }
         }
     }
@@ -96,7 +101,7 @@ class MacroManager {
             if (desiredGas > gasIncome && !buildManager.buildingUnit(ZERG_EXTRACTOR)) {
                 for (Base base : bases) {
                     if (base.getExtractors().size() < 2) {
-                        queueRequest(new BuildingRequest(ZERG_EXTRACTOR, base, false));
+                        queueRequest(new BuildRequest(ZERG_EXTRACTOR, base, false));
                         break;
                     }
                 }
@@ -136,11 +141,11 @@ class MacroManager {
 
     void requestQueen(Base base) {
         if (buildUtils.checkCanMakeUnit(ZERG_QUEEN, minerals, gas)) {
-            queueRequest(new BuildingRequest(ZERG_QUEEN, base, false));
+            queueRequest(new BuildRequest(ZERG_QUEEN, base, false));
         }
     }
 
-    public void queueRequest(BuildingRequest request) {
+    public void queueRequest(BuildRequest request) {
         if (!requests.contains(request)) {
             if (request.isUnique() && buildManager.buildingUnit(request.type)) {
                 log.info("Already building a :" + request.type);
@@ -161,9 +166,9 @@ class MacroManager {
         if (requests.size() == 0) {
             return false;
         } else {
-            BuildingRequest handled = null;
+            BuildRequest handled = null;
             boolean success = false;
-            for (BuildingRequest request : requests) {
+            for (BuildRequest request : requests) {
                 if (buildUtils.checkCanMakeUnit(request.type, minerals, gas)) {
                     handled = request;
                     success = buildManager.incrementalHandleRequest(handled);
