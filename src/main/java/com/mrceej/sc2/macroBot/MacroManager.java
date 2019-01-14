@@ -78,15 +78,17 @@ class MacroManager {
 
         }
     }
+
     private void checkGassesByBase() {
         for (Base base : bases) {
-            if (base.countMineralWorkers() > 16 &&
+            if (base.countMineralWorkers() >= 16 &&
                     base.countGasWorkers() == 3 &&
                     base.getExtractors().size() < 2 &&
                     !buildManager.buildingUnit(ZERG_EXTRACTOR)) {
                 queueRequest(new BuildRequest(ZERG_EXTRACTOR, base, false));
             } else if (base.countMineralWorkers() > 14 &&
-                    base.getExtractors().size() < 1) {
+                    base.getExtractors().size() < 1 &&
+                    !buildManager.buildingUnit(ZERG_EXTRACTOR)) {
                 queueRequest(new BuildRequest(ZERG_EXTRACTOR, base, false));
             }
         }
@@ -136,7 +138,6 @@ class MacroManager {
             defaultBuild.build();
         }
     }
-
 
 
     void requestQueen(Base base) {
