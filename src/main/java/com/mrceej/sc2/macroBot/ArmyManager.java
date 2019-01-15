@@ -95,5 +95,6 @@ public class ArmyManager {
 
     public void onUnitDestroyed(UnitInPool unitInPool) {
         groundScouts.onUnitDestroyed(unitInPool);
+        mainArmy.remove(unitInPool);
     }
 }

@@ -4,6 +4,7 @@ import com.github.ocraft.s2client.bot.ClientError;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.bot.setting.PlayerSettings;
 import com.github.ocraft.s2client.protocol.game.Race;
+import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.mrceej.sc2.CeejBot;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -96,7 +97,10 @@ public class MacroBot extends CeejBot {
     }
 
     @Override
-    public void onUnitEnterVision(UnitInPool unitInPool) {
+    public void onUnitEnterVision(UnitInPool unit) {
+        if (unit.unit().getAlliance().equals(Alliance.ENEMY)) {
+            adviser.enemySpotted(unit);
+        }
     }
 
     @Override
@@ -108,8 +112,13 @@ public class MacroBot extends CeejBot {
     }
 
     @Override
-    public void onUnitDestroyed(UnitInPool unitInPool) {
-        unitManager.onUnitDestroyed(unitInPool);
+    public void onUnitDestroyed(UnitInPool unit) {
+        // TODO: Check if this should be based of tags as unit.unit() might not work.
+        if (unit.unit().getAlliance().equals(Alliance.ENEMY)) {
+            adviser.enemyDestroyed(unit);
+        } else {
+            unitManager.onUnitDestroyed(unit);
+        }
     }
 
     @Override

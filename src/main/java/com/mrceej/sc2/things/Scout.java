@@ -32,7 +32,7 @@ public class Scout extends Dude {
             if (distanceToScoutTarget > 10d) {
                 Command currentCommand = getCurrentCommand();
                 if (currentCommand==null || currentCommand.ability != Abilities.MOVE || currentCommand.target != scoutTarget) {
-                    this.setCurrentCommand(new Command(Abilities.MOVE, scoutTarget));
+                    this.giveCommand(new Command(Abilities.MOVE, scoutTarget));
                 }
             }
         }

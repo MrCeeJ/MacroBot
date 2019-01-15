@@ -11,7 +11,7 @@ import com.mrceej.sc2.macroBot.MacroBot;
 class BotClient {
 
     private static final Race preferredOpponentRace = Race.ZERG;
-    private static final Difficulty preferredOpponentDifficulty = Difficulty.MEDIUM;
+    private static final Difficulty preferredOpponentDifficulty = Difficulty.MEDIUM_HARD;
     private static final Race PLAYER_RACE = Race.ZERG;
 
     public static void main(String[] args) {

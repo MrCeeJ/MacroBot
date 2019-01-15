@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @EqualsAndHashCode
-public class Dude {
+public class EnemyDude {
 
     private final S2Agent agent;
     @Getter
@@ -17,24 +17,11 @@ public class Dude {
     private final UnitInPool unitInPool;
     @Getter
     private Unit unit;
-    @Getter
-    private Command currentCommand;
 
-    public Dude(S2Agent agent, UnitInPool unitInPool) {
+    public EnemyDude(S2Agent agent, UnitInPool unitInPool) {
         this.agent = agent;
         this.tag = unitInPool.getTag();
         this.unitInPool = unitInPool;
         this.unit = unitInPool.unit();
-    }
-
-    public void update(UnitInPool unitInPool) {
-        this.unit = unitInPool.unit();
-    }
-
-    void giveCommand(Command newCommand) {
-        if (currentCommand == null || currentCommand.ability != newCommand.ability || currentCommand.target != newCommand.target) {
-            this.currentCommand = newCommand;
-            agent.actions().unitCommand(unit, currentCommand.ability, currentCommand.target, currentCommand.queue);
-        }
     }
 }

@@ -1,10 +1,12 @@
 package com.mrceej.sc2.macroBot;
 
+import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.game.raw.StartRaw;
 import com.github.ocraft.s2client.protocol.response.ResponseGameInfo;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.mrceej.sc2.builds.Plan;
 import com.mrceej.sc2.builds.PoolFirstExpand;
+import com.mrceej.sc2.things.EnemyUnits;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -18,8 +20,11 @@ public class Adviser {
     private Plan currentPlan;
     private UnitManager unitManager;
 
+    private EnemyUnits enemyDudes;
+
     Adviser(MacroBot macroBot) {
         this.agent = macroBot;
+        this.enemyDudes = new EnemyUnits(agent);
     }
 
     public void init() {
@@ -41,7 +46,12 @@ public class Adviser {
     }
 
     public Point2d getAttackTarget() {
-        //TODO: Find decent targets
+        //Find nearest targets
+        Point2d source = agent.observation().getStartLocation().toPoint2d();
+        UnitInPool base = enemyDudes.getNearestBuildingTo(source);
+        if (base != null) {
+            return base.unit().getPosition().toPoint2d();
+        }
 
         // Default to start position
         ResponseGameInfo gameInfo = agent.observation().getGameInfo();
@@ -58,5 +68,13 @@ public class Adviser {
 
     public Point2d getRetreatTarget() {
         return unitManager.getMain().getBase().unit().getPosition().toPoint2d();
+    }
+
+    void enemySpotted(UnitInPool unit) {
+        enemyDudes.add(unit);
+    }
+
+    void enemyDestroyed(UnitInPool unit) {
+        enemyDudes.remove(unit);
     }
 }

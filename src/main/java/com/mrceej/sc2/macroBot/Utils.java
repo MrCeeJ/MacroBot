@@ -42,7 +42,15 @@ public class Utils {
         return agent.observation().getUnits(Alliance.SELF, (unitInPool -> unitInPool.unit().getType().equals(unit)));
     }
 
-    private Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
+    public Comparator<UnitInPool> getLinearDistanceComparatorForUnitInPool(Point2d source) {
+        return (p1, p2) -> {
+            Double d1 = p1.unit().getPosition().toPoint2d().distance(source);
+            Double d2 = p2.unit().getPosition().toPoint2d().distance(source);
+            return d1.compareTo(d2);
+        };
+    }
+
+    public Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
         return (p1, p2) -> {
             Double d1 = p1.distance(source);
             Double d2 = p2.distance(source);

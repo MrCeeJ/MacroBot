@@ -7,7 +7,7 @@ import java.util.List;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
-class BuildUtils {
+public class BuildUtils {
 
     private Utils utils;
     private final MacroBot agent;
@@ -179,11 +179,11 @@ class BuildUtils {
         }
     }
 
-    private int queryMineralCost(Units unit) {
+    public int queryMineralCost(Units unit) {
         return agent.observation().getUnitTypeData(false).get(unit).getMineralCost().orElse(0);
     }
 
-    private int queryGasCost(Units unit) {
+    public int queryGasCost(Units unit) {
         return agent.observation().getUnitTypeData(false).get(unit).getVespeneCost().orElse(0);
     }
 
