@@ -21,6 +21,7 @@ public class Adviser {
     private UnitManager unitManager;
 
     private EnemyUnits enemyDudes;
+    private UnitInPool currentAttackTarget;
 
     Adviser(MacroBot macroBot) {
         this.agent = macroBot;
@@ -47,10 +48,9 @@ public class Adviser {
 
     public Point2d getAttackTarget() {
         //Find nearest targets
-        Point2d source = agent.observation().getStartLocation().toPoint2d();
-        UnitInPool base = enemyDudes.getNearestBuildingTo(source);
-        if (base != null) {
-            return base.unit().getPosition().toPoint2d();
+        currentAttackTarget = getNextAttackTarget();
+        if (currentAttackTarget != null) {
+            return currentAttackTarget.unit().getPosition().toPoint2d();
         }
 
         // Default to start position
@@ -66,6 +66,10 @@ public class Adviser {
         return null;
     }
 
+    private UnitInPool getNextAttackTarget() {
+        return enemyDudes.getNearestBuildingTo(agent.observation().getStartLocation().toPoint2d());
+    }
+
     public Point2d getRetreatTarget() {
         return unitManager.getMain().getBase().unit().getPosition().toPoint2d();
     }
@@ -76,5 +80,8 @@ public class Adviser {
 
     void enemyDestroyed(UnitInPool unit) {
         enemyDudes.remove(unit);
+        if (currentAttackTarget.equals(unit)) {
+            currentAttackTarget = getNextAttackTarget();
+        }
     }
 }
