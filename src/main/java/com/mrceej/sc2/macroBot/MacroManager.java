@@ -26,9 +26,6 @@ class MacroManager {
     private BuildUtils buildUtils;
     private int minerals;
     private int gas;
-    private int supplyUsed;
-    private int supplyCap;
-    private int droneCount;
     private Collection<Base> bases;
     private UnitManager unitManager;
     @Getter
@@ -123,9 +120,6 @@ class MacroManager {
     private void updateData() {
         this.minerals = agent.observation().getMinerals();
         this.gas = agent.observation().getVespene();
-        this.supplyUsed = agent.observation().getFoodUsed();
-        this.supplyCap = agent.observation().getFoodCap();
-        this.droneCount = utils.getDrones().size();
         this.bases = unitManager.getBases().values();
         this.workers = utils.getAllUnitsOfType(Units.ZERG_DRONE).size();
         this.plan = adviser.getCurrentPlan();

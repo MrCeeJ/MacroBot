@@ -1,6 +1,7 @@
 package com.mrceej.sc2.things;
 
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
+import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Tag;
@@ -48,7 +49,7 @@ public class Army {
     public void add(UnitInPool unit) {
         Dude dude = new Dude(agent, unit);
         this.dudes.put(dude.getTag(), dude);
-        Units type = (Units)unit.unit().getType();
+        Units type = (Units) unit.unit().getType();
         if (type.equals(ZERG_ZERGLING)) {
             armySupply += 1;
             armyValue += 25;
@@ -67,7 +68,7 @@ public class Army {
     public void remove(UnitInPool unit) {
         if (dudes.containsKey(unit.getTag())) {
             dudes.remove(unit.getTag());
-            Units type = (Units)unit.unit().getType();
+            Units type = (Units) unit.unit().getType();
             if (type.equals(ZERG_ZERGLING)) {
                 armySupply -= 1;
                 armyValue -= 25;
@@ -79,6 +80,11 @@ public class Army {
         }
     }
 
+    void giveOrder(Abilities order, Point2d target) {
+        for (Dude dude : dudes.values()) {
+            dude.giveCommand(new Command(order, target));
+        }
+    }
 
     public void update() {
         if (adviser == null) {
@@ -93,20 +99,23 @@ public class Army {
             if (adviser.isSafe() && adviser.getCurrentPlan().shouldAttack()) {
                 STATE = "Attacking";
                 currentAttackTarget = adviser.getAttackTarget();
-                for (Dude dude : dudes.values()) {
-                    dude.giveCommand(new Command(ATTACK_ATTACK, currentAttackTarget));
-                }
+                giveOrder(ATTACK_ATTACK, currentAttackTarget);
             }
             // Check for defence
             // Patrol
         } else if (STATE.equals("Attacking")) {
             if (adviser.getCurrentPlan().shouldRetreat()) {
                 STATE = "Defending";
-                for (Dude dude : dudes.values()) {
-                    currentRetreatTarget = adviser.getRetreatTarget();
-                    dude.giveCommand(new Command(MOVE, currentRetreatTarget));
+                currentRetreatTarget = adviser.getRetreatTarget();
+                giveOrder(MOVE, currentRetreatTarget);
+            } else {
+                Point2d newTarget = adviser.getAttackTarget();
+                if (newTarget != currentAttackTarget) {
+                    currentAttackTarget = newTarget;
+                    giveOrder(ATTACK_ATTACK, currentRetreatTarget);
                 }
             }
+
         }
     }
 }

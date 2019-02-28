@@ -1,6 +1,8 @@
 package com.mrceej.sc2.things;
 
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
+import com.github.ocraft.s2client.protocol.data.UnitType;
+import com.github.ocraft.s2client.protocol.data.UnitTypeData;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Tag;
@@ -10,7 +12,9 @@ import com.mrceej.sc2.macroBot.Utils;
 import lombok.Getter;
 
 import java.util.HashMap;
+import java.util.Map;
 
+import static com.github.ocraft.s2client.protocol.data.UnitAttribute.STRUCTURE;
 import static com.github.ocraft.s2client.protocol.data.Units.ZERG_ZERGLING;
 
 public class EnemyUnits {
@@ -18,6 +22,7 @@ public class EnemyUnits {
     private final Utils utils;
     private HashMap<Tag, EnemyDude> enemyDudes;
     private MacroBot agent;
+    private Map<UnitType, UnitTypeData> data;
 
     @Getter
     private int enemySupply;
@@ -31,6 +36,7 @@ public class EnemyUnits {
         this.enemyDudes = new HashMap<>();
         this.buildUtils = agent.getBuildUtils();
         this.utils = agent.getUtils();
+
     }
 
     public void add(UnitInPool unit) {
@@ -38,7 +44,7 @@ public class EnemyUnits {
         if (!enemyDudes.containsKey(unit.getTag())) {
 //            if (unit.unit().getType()
             enemyDudes.put(unit.getTag(), new EnemyDude(agent, unit));
-            Units type = (Units)unit.unit().getType();
+            Units type = (Units) unit.unit().getType();
             if (type.equals(ZERG_ZERGLING)) {
                 enemySupply += 1;
                 enemyArmyValue += 25;
@@ -52,7 +58,7 @@ public class EnemyUnits {
 
     public void remove(UnitInPool unit) {
         enemyDudes.remove(unit.getTag());
-        Units type = (Units)unit.unit().getType();
+        Units type = (Units) unit.unit().getType();
 
         if (type.equals(ZERG_ZERGLING)) {
             enemySupply -= 1;
@@ -66,10 +72,10 @@ public class EnemyUnits {
     }
 
     public UnitInPool getNearestBuildingTo(Point2d point) {
+        this.data = agent.observation().getUnitTypeData(false);
         return enemyDudes.values().stream()
                 .map(EnemyDude::getUnitInPool)
-                // TODO: filter for buildings
-//                .filter(unitInPool -> unitInPool.unit().getType())
+                .filter(unitInPool -> data.get(unitInPool.unit().getType()).getAttributes().contains(STRUCTURE))
                 .min(utils.getLinearDistanceComparatorForUnitInPool(point))
                 .orElse(null);
     }
