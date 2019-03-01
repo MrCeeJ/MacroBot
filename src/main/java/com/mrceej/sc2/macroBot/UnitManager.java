@@ -232,7 +232,7 @@ class UnitManager {
         }
     }
 
-    Base getNearestBase(Point2d point) {
+    private Base getNearestBase(Point2d point) {
         if (bases.size() == 1) {
             return (Base) bases.values().toArray()[0];
         } else {

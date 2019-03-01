@@ -29,15 +29,19 @@ public class PoolFirstExpand extends Plan {
 
     @Override
     public void update(MacroManager manager) {
-        if (STATE.equals("POOL_COMPLETE")) {
-            manager.queueRequest(new BuildRequest(ZERG_ZERGLING, 6, false));
-            STATE = "LINGS_REQUESTED";
-        } else if (STATE.equals("ROACH_WARREN_COMPLETE")) {
-            manager.queueRequest(new BuildRequest(ZERG_ROACH, 8, false));
-            STATE = "ROACHES_REQUESTED";
-        } else if (STATE.equals("LAIR_COMPLETE")) {
-            manager.queueRequest(new BuildRequest(ZERG_ROACH, 16, false));
-            STATE = "ROACHES_REQUESTED_2";
+        switch (STATE) {
+            case "POOL_COMPLETE":
+                manager.queueRequest(new BuildRequest(ZERG_ZERGLING, 6, false));
+                STATE = "LINGS_REQUESTED";
+                break;
+            case "ROACH_WARREN_COMPLETE":
+                manager.queueRequest(new BuildRequest(ZERG_ROACH, 8, false));
+                STATE = "ROACHES_REQUESTED";
+                break;
+            case "LAIR_COMPLETE":
+                manager.queueRequest(new BuildRequest(ZERG_ROACH, 16, false));
+                STATE = "ROACHES_REQUESTED_2";
+                break;
         }
 
     }

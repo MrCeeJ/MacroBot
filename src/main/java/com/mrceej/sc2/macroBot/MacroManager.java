@@ -164,7 +164,7 @@ class MacroManager {
             BuildRequest handled = null;
             boolean success = false;
             for (BuildRequest request : requests) {
-                if (buildUtils.checkCanMakeUnit(request.type, minerals, gas)) {
+                if (request.canFulfilRequest(minerals, gas)) {
                     handled = request;
                     success = buildManager.incrementalHandleRequest(handled);
                     this.minerals -= buildUtils.getMineralCost(request.type);

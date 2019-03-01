@@ -15,9 +15,9 @@ public class ScoutArmy extends Army {
 
     private Set<Point2d> enemyBases;
     private Set<Point2d> enemyNaturals;
-    private List<Scout> scouts;
+    private final List<Scout> scouts;
 
-    private Map<Point2d, Scout> allocations;
+    private final Map<Point2d, Scout> allocations;
     private List<UnitInPool> towers;
 
     public void update() {

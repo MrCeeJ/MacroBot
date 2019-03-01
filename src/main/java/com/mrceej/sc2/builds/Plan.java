@@ -12,7 +12,7 @@ import static com.github.ocraft.s2client.protocol.data.Units.*;
 public abstract class Plan {
 
     List<BuildOrderEntry> buildMilestones;
-    MacroBot agent;
+    private final MacroBot agent;
 
     Plan(MacroBot agent) {
         this.agent = agent;

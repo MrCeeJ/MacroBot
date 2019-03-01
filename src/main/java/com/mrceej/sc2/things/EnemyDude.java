@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @EqualsAndHashCode
-public class EnemyDude {
+class EnemyDude {
 
     private final S2Agent agent;
     @Getter
@@ -16,7 +16,7 @@ public class EnemyDude {
     @Getter
     private final UnitInPool unitInPool;
     @Getter
-    private Unit unit;
+    private final Unit unit;
 
     public EnemyDude(S2Agent agent, UnitInPool unitInPool) {
         this.agent = agent;

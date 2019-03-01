@@ -9,13 +9,14 @@ import lombok.Setter;
 public class BuildRequest {
     final Units type;
     @Getter
-    private boolean unique;
+    private final boolean unique;
     int count;
     @Setter
     Base base;
-    final Point2d location;
+    private final Point2d location;
 
-    public BuildRequest(Units type) {
+
+    private BuildRequest(Units type) {
         this.type = type;
         this.count = 1;
         this.base = null;
@@ -24,7 +25,7 @@ public class BuildRequest {
 
     }
 
-    public BuildRequest(Units type, int count) {
+    private BuildRequest(Units type, int count) {
         this.type = type;
         this.count = count;
         this.base = null;
@@ -33,7 +34,7 @@ public class BuildRequest {
 
     }
 
-    public BuildRequest(Units type, Base base) {
+    private BuildRequest(Units type, Base base) {
         this.type = type;
         this.count = 1;
         this.base = base;
@@ -51,7 +52,7 @@ public class BuildRequest {
 
     }
 
-    public BuildRequest(Units type, Point2d location) {
+    private BuildRequest(Units type, Point2d location) {
         this.type = type;
         this.count = 1;
         this.base = null;
@@ -99,5 +100,10 @@ public class BuildRequest {
         result = 31 * result + (location != null ? location.hashCode() : 5);
         result = 31 * result + (unique ? 2 : 1);
         return result;
+    }
+
+    public boolean canFulfilRequest(int minerals, int gas) {
+       return true; //TODO: WIP
+       //return buildUtils.checkCanMakeUnit(this.type, minerals, gas);
     }
 }

@@ -20,8 +20,8 @@ import static com.github.ocraft.s2client.protocol.data.Units.ZERG_ZERGLING;
 public class EnemyUnits {
     private final BuildUtils buildUtils;
     private final Utils utils;
-    private HashMap<Tag, EnemyDude> enemyDudes;
-    private MacroBot agent;
+    private final HashMap<Tag, EnemyDude> enemyDudes;
+    private final MacroBot agent;
     private Map<UnitType, UnitTypeData> data;
 
     @Getter

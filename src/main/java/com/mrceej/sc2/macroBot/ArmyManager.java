@@ -9,13 +9,13 @@ import com.mrceej.sc2.things.*;
 import java.util.List;
 import java.util.Set;
 
-public class ArmyManager {
+class ArmyManager {
 
     private final Utils utils;
     private final QueenArmy queens;
-    private Army mainArmy;
-    private ScoutArmy groundScouts;
-    private MacroBot agent;
+    private final Army mainArmy;
+    private final ScoutArmy groundScouts;
+    private final MacroBot agent;
     private List<UnitInPool> towers;
     private Set<Point2d> enemyBases;
     private Set<Point2d> enemyNaturals;

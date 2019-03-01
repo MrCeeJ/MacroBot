@@ -5,10 +5,10 @@ import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
-public class Command {
+class Command {
 
-    Ability ability;
-    Point2d target;
+    final Ability ability;
+    final Point2d target;
     boolean queue;
 
     public Command(Ability ability, Point2d target) {

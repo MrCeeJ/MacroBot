@@ -16,11 +16,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Adviser {
 
 
-    private MacroBot agent;
+    private final MacroBot agent;
     private Plan currentPlan;
     private UnitManager unitManager;
 
-    private EnemyUnits enemyDudes;
+    private final EnemyUnits enemyDudes;
     private UnitInPool currentAttackTarget;
 
     Adviser(MacroBot macroBot) {
@@ -39,6 +39,7 @@ public class Adviser {
     }
 
     public boolean isSafe() {
+        //TODO: Add threat detection code for enemy build orders
         return true;
     }
 

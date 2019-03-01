@@ -12,7 +12,7 @@ class Debugger {
     private static final Point2d DEFAULT_LOCATION = Point2d.of(0.5f, 0.5f);
     private static final Color DEFAULT_COLOUR = Color.GREEN;
     private static final int DEFAULT_SIZE = 5;
-    private MacroBot macroBot;
+    private final MacroBot macroBot;
 
     public Debugger(MacroBot macroBot) {
 
@@ -32,13 +32,13 @@ class Debugger {
         }
     }
 
-    public void debugMessage(String message, Unit unit) {
+    private void debugMessage(String message, Unit unit) {
         if (DEBUG_ENABLED) {
             debugMessage(message, unit.getPosition().toPoint2d());
         }
     }
 
-    public void debugMessage(String message, Point2d location) {
+    private void debugMessage(String message, Point2d location) {
         if (DEBUG_ENABLED) {
             macroBot.debug().debugTextOut(message, location, DEFAULT_COLOUR, DEFAULT_SIZE);
         }

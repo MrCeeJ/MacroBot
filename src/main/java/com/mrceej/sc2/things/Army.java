@@ -31,7 +31,7 @@ public class Army {
     private String STATE = "Defending";
     private Point2d currentRetreatTarget;
     private Point2d currentAttackTarget;
-    private HashMap<Tag, Dude> dudes;
+    private final HashMap<Tag, Dude> dudes;
 
     @Getter
     private int armySupply;
@@ -80,7 +80,7 @@ public class Army {
         }
     }
 
-    void giveOrder(Abilities order, Point2d target) {
+    private void giveOrder(Abilities order, Point2d target) {
         for (Dude dude : dudes.values()) {
             dude.giveCommand(new Command(order, target));
         }

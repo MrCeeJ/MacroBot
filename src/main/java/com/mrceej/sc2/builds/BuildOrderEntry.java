@@ -14,7 +14,7 @@ public class BuildOrderEntry {
     @Getter
     private final Ability ability;
     public final boolean isUnit;
-    public final boolean isUpgrade;
+    private final boolean isUpgrade;
 
 
     public BuildOrderEntry(int workers, Units unit, boolean unique){

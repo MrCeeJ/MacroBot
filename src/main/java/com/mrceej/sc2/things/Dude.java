@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @EqualsAndHashCode
-public class Dude {
+class Dude {
 
     private final S2Agent agent;
     @Getter

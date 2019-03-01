@@ -6,10 +6,10 @@ import lombok.EqualsAndHashCode;
 import java.util.ArrayList;
 import java.util.List;
 
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class QueenArmy extends Army {
 
-    List<Queen> queens;
+    final List<Queen> queens;
 
     public QueenArmy(MacroBot agent) {
         super(agent);

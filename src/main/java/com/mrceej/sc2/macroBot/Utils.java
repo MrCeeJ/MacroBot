@@ -20,7 +20,7 @@ import static com.github.ocraft.s2client.protocol.data.Units.*;
 public class Utils {
 
     private final MacroBot agent;
-    private BuildManager buildManager;
+    private final BuildManager buildManager;
 
     public Utils(MacroBot agent) {
         this.agent = agent;
@@ -50,7 +50,7 @@ public class Utils {
         };
     }
 
-    public Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
+    private Comparator<Point2d> getLinearDistanceComparatorForPoint2d(Point2d source) {
         return (p1, p2) -> {
             Double d1 = p1.distance(source);
             Double d2 = p2.distance(source);
